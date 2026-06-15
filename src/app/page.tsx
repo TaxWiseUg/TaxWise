@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { C } from "../lib/constants";
 import { AuthPage } from "../components/AuthPage";
+import { LandingPage } from "../components/LandingPage";
 import { Dashboard } from "../components/Dashboard";
 import { CaseAnalyzer } from "../components/CaseAnalyzer";
 import { CaseLibrary } from "../components/CaseLibrary";
@@ -25,6 +26,7 @@ export default function TaxWiseSaaS() {
   const [dbUser, setDbUser] = useState<DbProfile | null>(null);
   const [page, setPage] = useState("dashboard");
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<"landing" | "auth">("landing");
 
   const refreshUser = async () => {
     try {
@@ -117,7 +119,7 @@ export default function TaxWiseSaaS() {
       case "pricing":
         return <PricingPage user={dbUser} onRefreshUser={refreshUser} />;
       case "admin":
-        return <AdminPortal />;
+        return <AdminPortal onNavigate={setPage} />;
       default:
         return <Dashboard user={dbUser} onNavigate={setPage} />;
     }
@@ -125,87 +127,252 @@ export default function TaxWiseSaaS() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center", background: C.offwhite }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "2.5rem", animation: "spin 1s linear infinite", marginBottom: 12, color: C.teal }}>⟳</div>
-          <div style={{ fontSize: "0.9rem", color: C.muted, fontWeight: 500 }}>Syncing session...</div>
+      <div style={{ display: "flex", minHeight: "100vh", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#FAFAF8", fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", animation: "fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}>
+          {/* Logo Branding */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
+            <div style={{ width: 12, height: 12, background: "#C8922A", borderRadius: 3, transform: "rotate(45deg)", flexShrink: 0, boxShadow: "0 0 12px rgba(200, 146, 42, 0.4)" }} />
+            <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: "#0F2044", fontWeight: 800, letterSpacing: "-0.01em" }}>
+              Tax<span style={{ color: "#1A7B6B" }}>Wise</span>
+            </span>
+          </div>
+
+          {/* Premium CSS/SVG Spinner */}
+          <div style={{ position: "relative", width: 44, height: 44, marginBottom: 20 }}>
+            {/* Outer glowing pulsed ring */}
+            <div style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "2px solid rgba(26, 123, 107, 0.05)", animation: "pulseGlow 2s infinite ease-in-out" }} />
+            {/* SVG Spinner */}
+            <svg width="44" height="44" viewBox="0 0 44 44" style={{ display: "block" }}>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(15, 32, 68, 0.04)" strokeWidth="3" />
+              <circle cx="22" cy="22" r="18" fill="none" stroke="url(#spinner-gradient)" strokeWidth="3" strokeDasharray="113" strokeDashoffset="40" strokeLinecap="round" style={{ transformOrigin: "center", animation: "spin 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite" }} />
+              <defs>
+                <linearGradient id="spinner-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#1A7B6B" />
+                  <stop offset="100%" stopColor="#4DD9C0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          {/* Loading Text */}
+          <div style={{ fontSize: "0.72rem", color: "#6B7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", animation: "pulse 1.8s infinite ease-in-out" }}>
+            Syncing session
+          </div>
+          <div style={{ fontSize: "0.78rem", color: "rgba(15, 32, 68, 0.45)", marginTop: 6, fontWeight: 500 }}>
+            Securing your connection...
+          </div>
         </div>
       </div>
     );
   }
 
-  // Redirect to AuthPage if user is not logged in
+  // Show landing page or auth if not logged in
   if (!user || !dbUser) {
-    return <AuthPage onLoginSuccess={refreshUser} />;
+    if (view === "landing") {
+      return (
+        <LandingPage
+          onGetStarted={() => setView("auth")}
+          onSignIn={() => setView("auth")}
+        />
+      );
+    }
+    return <AuthPage onLoginSuccess={refreshUser} onBack={() => setView("landing")} />;
   }
+
+  // Sidebar Nav Item Helper Component for hover states
+  const SidebarNavItem = ({ item, isActive, onClick }: { item: any, isActive: boolean, onClick: () => void }) => {
+    const [hovered, setHovered] = useState(false);
+    return (
+      <button
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          width: "100%",
+          padding: "11px 16px",
+          borderRadius: 12,
+          border: "none",
+          background: isActive 
+            ? `linear-gradient(135deg, ${C.teal} 0%, ${C.tealDark} 100%)` 
+            : hovered 
+              ? "rgba(255,255,255,0.06)" 
+              : "transparent",
+          color: isActive ? C.white : hovered ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.55)",
+          fontWeight: isActive ? 700 : 500,
+          fontSize: "0.875rem",
+          cursor: "pointer",
+          transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+          marginBottom: 4,
+          textAlign: "left",
+          fontFamily: "inherit",
+          transform: hovered && !isActive ? "translateX(4px)" : "none",
+          boxShadow: isActive ? "0 4px 12px rgba(26,123,107,0.3)" : "none",
+        }}
+      >
+        <span style={{ fontSize: "1.1rem", display: "inline-flex", alignItems: "center", justifyContent: "center", opacity: isActive || hovered ? 1 : 0.7 }}>
+          {item.icon}
+        </span>
+        <span>{item.label}</span>
+      </button>
+    );
+  };
+
+  // Get dynamic page title for header
+  const getPageTitle = () => {
+    const activeItem = navItems.find(n => n.id === page);
+    return activeItem ? activeItem.label : "Dashboard";
+  };
+
+  // Get user initials for avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map(part => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const formattedDate = new Date().toLocaleDateString("en-US", {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', -apple-system, sans-serif", background: C.offwhite }}>
       {/* SIDEBAR */}
-      <div style={{ width: 220, background: C.navy, display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh", flexShrink: 0 }}>
-        <div style={{ padding: "22px 20px 16px", borderBottom: "1px solid rgba(255,255,255,.1)" }}>
-          <div style={{ fontFamily: "Georgia, serif", fontSize: "1.3rem", color: C.white, fontWeight: 800 }}>
-            Tax<span style={{ color: C.teal }}>Wise</span>
+      <div 
+        className="glass-sidebar"
+        style={{ 
+          width: 240, 
+          display: "flex", 
+          flexDirection: "column", 
+          position: "sticky", 
+          top: 0, 
+          height: "100vh", 
+          flexShrink: 0,
+          boxShadow: "4px 0 24px rgba(15, 32, 68, 0.08)",
+          zIndex: 50
+        }}
+      >
+        <div style={{ padding: "26px 24px 20px", borderBottom: "1px solid rgba(255,255,255,.05)" }}>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.45rem", color: C.white, fontWeight: 800, letterSpacing: "-0.01em" }}>
+            Tax<span style={{ color: "#4DD9C0" }}>Wise</span>
           </div>
-          <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,.4)", marginTop: 2 }}>Uganda Tax Platform</div>
+          <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,.35)", marginTop: 4, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+            Uganda Tax Platform
+          </div>
         </div>
-        <nav style={{ flex: 1, padding: "12px 10px" }}>
+
+        <nav style={{ flex: 1, padding: "20px 14px", overflowY: "auto" }}>
           {navItems.map((n) => (
-            <button
+            <SidebarNavItem
               key={n.id}
+              item={n}
+              isActive={page === n.id}
               onClick={() => setPage(n.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: 8,
-                border: "none",
-                background: page === n.id ? "rgba(26,123,107,.3)" : "transparent",
-                color: page === n.id ? C.white : "rgba(255,255,255,.55)",
-                fontWeight: page === n.id ? 700 : 500,
-                fontSize: "0.875rem",
-                cursor: "pointer",
-                transition: "all .15s",
-                marginBottom: 2,
-                textAlign: "left",
-                fontFamily: "inherit",
-                borderLeft: page === n.id ? `3px solid ${C.teal}` : "3px solid transparent",
-              }}
-            >
-              <span style={{ minWidth: 20 }}>{n.icon}</span>
-              {n.label}
-            </button>
+            />
           ))}
         </nav>
-        <div style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,.1)" }}>
-          <div style={{ fontSize: "0.82rem", fontWeight: 600, color: C.white, marginBottom: 2 }}>
-            {dbUser.full_name}
-          </div>
-          <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,.4)", marginBottom: 10 }}>
-            {dbUser.role} · <span style={{ color: C.teal, fontWeight: 700 }}>{dbUser.plan?.toUpperCase()}</span>
+
+        {/* PROFILE SECTION */}
+        <div style={{ padding: "18px 20px", borderTop: "1px solid rgba(255,255,255,.05)", background: "rgba(15, 32, 68, 0.2)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+            <div 
+              style={{ 
+                width: 38, 
+                height: 38, 
+                borderRadius: "50%", 
+                background: `linear-gradient(135deg, ${C.teal} 0%, ${C.tealDark} 100%)`, 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center", 
+                color: C.white, 
+                fontSize: "0.85rem", 
+                fontWeight: 700,
+                boxShadow: "0 2px 8px rgba(26,123,107,0.3)"
+              }}
+            >
+              {getInitials(dbUser.full_name)}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: "0.85rem", fontWeight: 700, color: C.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {dbUser.full_name}
+              </div>
+              <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,.4)", display: "flex", alignItems: "center", gap: 4 }}>
+                <span>{dbUser.role}</span>
+                <span>•</span>
+                <span style={{ color: "#4DD9C0", fontWeight: 700 }}>{dbUser.plan?.toUpperCase()}</span>
+              </div>
+            </div>
           </div>
           <button
             onClick={handleSignOut}
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
               fontSize: "0.75rem",
+              fontWeight: 600,
               color: "rgba(255,255,255,.4)",
               background: "none",
               border: "none",
               cursor: "pointer",
               fontFamily: "inherit",
-              padding: 0,
+              padding: "4px 0",
+              transition: "color 0.2s",
+              width: "fit-content"
             }}
+            onMouseOver={e => e.currentTarget.style.color = C.red}
+            onMouseOut={e => e.currentTarget.style.color = "rgba(255,255,255,.4)"}
           >
-            Sign Out
+            <span>🚪</span> Sign Out
           </button>
         </div>
       </div>
 
       {/* MAIN CONTAINER */}
-      <div style={{ flex: 1, padding: "32px 36px", overflowY: "auto", maxHeight: "100vh" }}>
-        <main>{renderActivePage()}</main>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+        {/* HEADER BAR */}
+        <header 
+          style={{ 
+            height: 70, 
+            background: C.white, 
+            borderBottom: "1px solid rgba(15, 32, 68, 0.05)", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "space-between", 
+            padding: "0 40px",
+            flexShrink: 0,
+            boxShadow: "0 2px 12px rgba(15, 32, 68, 0.01)"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.8rem", color: C.muted, fontWeight: 500 }}>
+            <span>TaxWise</span>
+            <span style={{ fontSize: "0.6rem" }}>/</span>
+            <span style={{ color: C.navy, fontWeight: 700 }}>{getPageTitle()}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <span style={{ fontSize: "0.82rem", color: C.muted, fontWeight: 500 }}>📅 {formattedDate}</span>
+            <div style={{ width: 1, height: 20, background: C.border }} />
+            <div style={{ position: "relative" }}>
+              <span style={{ cursor: "pointer", fontSize: "1.2rem", color: C.navy }} title="Notifications">🔔</span>
+              <span style={{ position: "absolute", top: -2, right: -2, width: 7, height: 7, borderRadius: "50%", background: C.red }} />
+            </div>
+          </div>
+        </header>
+
+        {/* PAGE CONTENT */}
+        <div style={{ flex: 1, padding: "36px 40px", overflowY: "auto" }}>
+          <main key={page} className="page-fade-in" style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
+            {renderActivePage()}
+          </main>
+        </div>
       </div>
     </div>
   );

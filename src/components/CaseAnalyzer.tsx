@@ -38,6 +38,21 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
   const [fileName, setFileName] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [reports, setReports] = useState<CaseRecord[]>([]);
+  const [dragActive, setDragActive] = useState(false);
+  
+  // Accordion state to organize report findings
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    summary: true,
+    issues: true,
+    verdict: true,
+    advice: true,
+    law: true
+  });
+
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Fetch past reports from database
@@ -143,32 +158,137 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
     setCaseType(report.title.startsWith("File Analysis:") ? "TAT Ruling" : "General Scenario");
   };
 
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const selectedFile = e.dataTransfer.files[0];
+      setFile(selectedFile);
+      setFileName(selectedFile.name);
+      setText(
+        `[File Uploaded: ${selectedFile.name}]\n\nThis file is ready for analysis. The server will parse the PDF text and analyze it using the Anthropic Claude API.\n\nYou can also add custom notes or paste additional excerpts here if you'd like to combine them with the document.`
+      );
+    }
+  };
+
+  // Visual Risk Gauge Helper Component
+  const RiskGauge = ({ level }: { level: "low" | "medium" | "high" }) => {
+    const isLow = level === "low";
+    const isMed = level === "medium";
+    const isHigh = level === "high";
+
+    return (
+      <div style={{ display: "flex", gap: 6, alignItems: "center", width: "100%", maxWidth: 220 }}>
+        {[
+          { label: "LOW", active: isLow || isMed || isHigh, color: C.teal, bg: C.tealLight },
+          { label: "MED", active: isMed || isHigh, color: C.gold, bg: C.goldLight },
+          { label: "HIGH", active: isHigh, color: C.red, bg: C.redLight }
+        ].map((bar, idx) => (
+          <div 
+            key={bar.label} 
+            style={{ 
+              flex: 1, 
+              padding: "4px 0", 
+              borderRadius: 4, 
+              fontSize: "0.65rem", 
+              fontWeight: 800, 
+              textAlign: "center", 
+              transition: "all 0.3s ease",
+              background: bar.active ? bar.bg : "#E5E7EB",
+              color: bar.active ? bar.color : C.muted,
+              border: bar.active ? `1px solid ${bar.color}25` : "1px solid transparent"
+            }}
+          >
+            {bar.label}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Accordion Header component
+  const AccordionHeader = ({ title, isOpen, onClick }: { title: string; isOpen: boolean; onClick: () => void }) => (
+    <button
+      onClick={onClick}
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        width: "100%",
+        padding: "12px 14px",
+        background: "rgba(15, 32, 68, 0.02)",
+        border: `1px solid rgba(15, 32, 68, 0.05)`,
+        borderRadius: 8,
+        cursor: "pointer",
+        textAlign: "left",
+        fontFamily: "inherit",
+        fontSize: "0.85rem",
+        fontWeight: 700,
+        color: C.navy,
+        transition: "background 0.2s"
+      }}
+      onMouseOver={e => e.currentTarget.style.background = "rgba(15, 32, 68, 0.04)"}
+      onMouseOut={e => e.currentTarget.style.background = "rgba(15, 32, 68, 0.02)"}
+    >
+      <span>{title}</span>
+      <span style={{ 
+        transform: isOpen ? "rotate(180deg)" : "rotate(0)", 
+        transition: "transform 0.2s",
+        fontSize: "0.65rem",
+        color: C.muted
+      }}>
+        ▼
+      </span>
+    </button>
+  );
+
   return (
     <div>
-      <h1 style={{ fontFamily: "Georgia, serif", fontSize: "1.6rem", color: C.navy, marginBottom: 6 }}>
-        Case Analyzer
-      </h1>
-      <p style={{ color: C.muted, fontSize: "0.9rem", marginBottom: 24 }}>
-        Paste case text or upload a PDF. AI delivers a structured legal summary in seconds.
-      </p>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: C.navy, marginBottom: 6, fontWeight: 800 }}>
+          Case Analyzer
+        </h1>
+        <p style={{ color: C.muted, fontSize: "0.92rem", fontWeight: 500 }}>
+          Upload a TAT ruling PDF or paste dispute details. AI extracts structured legal analysis instantly.
+        </p>
+      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 24 }}>
-        <Card style={{ padding: 24 }}>
-          <div style={{ fontWeight: 700, color: C.navy, marginBottom: 16 }}>📄 Input</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 28, alignItems: "start" }}>
+        <Card style={{ padding: 28 }}>
+          <div style={{ fontWeight: 800, color: C.navy, marginBottom: 20, fontSize: "0.98rem" }}>📄 Document & Details Input</div>
 
-          {/* PDF Upload */}
+          {/* PDF Upload Dropzone */}
           <div
             onClick={() => fileRef.current?.click()}
+            onDragEnter={handleDrag}
+            onDragOver={handleDrag}
+            onDragLeave={handleDrag}
+            onDrop={handleDrop}
             style={{
-              border: `2px dashed ${C.border}`,
-              borderRadius: 10,
-              padding: "18px",
+              border: `2px dashed ${dragActive ? C.teal : C.border}`,
+              borderRadius: 14,
+              padding: "26px 20px",
               textAlign: "center",
               cursor: "pointer",
-              marginBottom: 14,
-              background: fileName ? C.tealLight : C.offwhite,
-              transition: "background .15s",
+              marginBottom: 16,
+              background: dragActive ? C.tealLight : fileName ? "rgba(26,123,107,0.04)" : C.offwhite,
+              transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+              transform: dragActive ? "scale(1.01)" : "scale(1)"
             }}
+            onMouseOver={e => { if(!dragActive && !fileName) e.currentTarget.style.background = "rgba(15, 32, 68, 0.02)"; }}
+            onMouseOut={e => { if(!dragActive && !fileName) e.currentTarget.style.background = C.offwhite; }}
           >
             <input
               ref={fileRef}
@@ -177,51 +297,60 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
               style={{ display: "none" }}
               onChange={handleFileChange}
             />
-            <div style={{ fontSize: "1.5rem", marginBottom: 6 }}>📎</div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: fileName ? C.teal : C.muted }}>
-              {fileName || "Click to upload PDF or TXT"}
+            <div style={{ fontSize: "1.8rem", marginBottom: 8, animation: dragActive ? "spin 1s linear infinite" : "none" }}>
+              {fileName ? "📄" : "📎"}
             </div>
-            <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 3 }}>
-              or drag & drop your case document
+            <div style={{ fontSize: "0.85rem", fontWeight: 700, color: fileName ? C.teal : C.navy }}>
+              {fileName || "Upload TAT Ruling / URA Letter"}
+            </div>
+            <div style={{ fontSize: "0.74rem", color: C.muted, marginTop: 4, fontWeight: 500 }}>
+              Supports PDF or TXT up to 15MB
             </div>
           </div>
 
-          <div style={{ textAlign: "center", color: C.muted, fontSize: "0.8rem", marginBottom: 12 }}>
-            — or paste text directly —
+          <div style={{ textAlign: "center", color: C.muted, fontSize: "0.78rem", fontWeight: 600, marginBottom: 14, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            — or paste text excerpts —
           </div>
 
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Paste the full text of a TAT ruling, URA assessment letter, or describe a tax scenario in detail..."
+            placeholder="Paste text contents of the ruling or write a detailed summary of your tax query here..."
+            className="input-focus-ring"
             style={{
               width: "100%",
-              border: `1px solid ${C.border}`,
-              borderRadius: 8,
-              padding: 14,
-              fontSize: "0.85rem",
+              border: `1.5px solid ${C.border}`,
+              borderRadius: 10,
+              padding: 16,
+              fontSize: "0.875rem",
               fontFamily: "inherit",
               resize: "vertical",
-              minHeight: 180,
+              minHeight: 200,
               outline: "none",
               background: C.offwhite,
               boxSizing: "border-box",
               color: C.text,
+              transition: "all 0.2s ease"
             }}
           />
 
-          <div style={{ display: "flex", gap: 10, marginTop: 12, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 12, marginTop: 18, alignItems: "center" }}>
             <select
               value={caseType}
               onChange={(e) => setCaseType(e.target.value)}
+              className="input-focus-ring"
               style={{
                 flex: 1,
-                border: `1px solid ${C.border}`,
+                border: `1.5px solid ${C.border}`,
                 borderRadius: 8,
-                padding: "9px 12px",
+                padding: "11px 14px",
                 fontSize: "0.85rem",
                 fontFamily: "inherit",
                 background: C.white,
+                color: C.navy,
+                fontWeight: 600,
+                outline: "none",
+                transition: "all 0.2s ease"
               }}
             >
               {["TAT Ruling", "URA Assessment", "Income Tax", "VAT Dispute", "PAYE Issue", "eFRIS Compliance", "General Scenario"].map((t) => (
@@ -229,14 +358,14 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
               ))}
             </select>
             <Button onClick={analyze} disabled={loading || (!text.trim() && !file)}>
-              {loading ? "⟳ Analyzing..." : "Analyze →"}
+              {loading ? "⟳ Analyzing..." : "Run AI Analysis →"}
             </Button>
           </div>
         </Card>
 
-        <Card style={{ padding: 24, minHeight: 380 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div style={{ fontWeight: 700, color: C.navy }}>✦ AI Analysis</div>
+        <Card style={{ padding: 28, minHeight: 460, display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, borderBottom: "1px solid rgba(15,32,68,0.05)", paddingBottom: 16 }}>
+            <div style={{ fontWeight: 800, color: C.navy, fontSize: "0.98rem" }}>✦ Analysis Findings</div>
             {result && !result.error && (
               <Button onClick={downloadReport} small variant="outline">
                 ⬇ Download Report
@@ -251,14 +380,17 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                height: "100%",
-                minHeight: 280,
+                flex: 1,
                 color: C.muted,
-                gap: 8,
+                gap: 12,
+                padding: "40px 0"
               }}
             >
-              <div style={{ fontSize: "2.5rem", opacity: 0.3 }}>📋</div>
-              <div style={{ fontSize: "0.875rem" }}>Analysis appears here</div>
+              <div style={{ fontSize: "3rem", opacity: 0.25 }}>📊</div>
+              <div style={{ fontSize: "0.9rem", fontWeight: 600 }}>Ready for case analysis</div>
+              <p style={{ fontSize: "0.78rem", color: C.muted, textAlign: "center", maxWidth: 240 }}>
+                Upload your document or paste the content on the left to see findings.
+              </p>
             </div>
           )}
 
@@ -269,161 +401,170 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                height: "100%",
-                minHeight: 280,
-                gap: 12,
+                flex: 1,
+                gap: 16,
+                padding: "40px 0"
               }}
             >
-              <div style={{ fontSize: "2rem", animation: "spin 1s linear infinite" }}>⟳</div>
-              <div style={{ fontSize: "0.875rem", color: C.muted }}>Reading and analyzing case...</div>
+              <div style={{ fontSize: "2.5rem", animation: "spin 1s linear infinite", color: C.teal }}>⟳</div>
+              <div style={{ fontSize: "0.9rem", color: C.navy, fontWeight: 700 }}>AI Tax Engine Active...</div>
+              <p style={{ fontSize: "0.78rem", color: C.muted, textAlign: "center", maxWidth: 220 }}>
+                Reading pages, matching precedents, and drafting summaries.
+              </p>
             </div>
           )}
 
           {result && result.error && (
-            <div style={{ color: C.red, fontSize: "0.875rem", padding: "20px 0" }}>
-              Analysis failed. Please check your internet connection and verify that you have added your Anthropic API Key in `.env.local`.
+            <div style={{ color: C.red, fontSize: "0.875rem", padding: "24px 0", textAlign: "center" }}>
+              <div style={{ fontSize: "2rem", marginBottom: 8 }}>⚠</div>
+              <strong>Analysis failed.</strong>
+              <p style={{ marginTop: 8, fontSize: "0.82rem", color: C.muted }}>
+                Please check your internet connection and verify that you have added your Anthropic API Key in `.env.local`.
+              </p>
             </div>
           )}
 
           {result && !result.error && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
-                <div
-                  style={{
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                    color: C.teal,
-                    textTransform: "uppercase",
-                    letterSpacing: ".08em",
-                    marginBottom: 4,
-                  }}
-                >
-                  Summary
-                </div>
-                <p style={{ fontSize: "0.875rem", color: C.text, lineHeight: 1.7 }}>{result.summary}</p>
-              </div>
-
-              <div>
-                <div
-                  style={{
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                    color: C.teal,
-                    textTransform: "uppercase",
-                    letterSpacing: ".08em",
-                    marginBottom: 4,
-                  }}
-                >
-                  Key Issues
-                </div>
-                {result.keyIssues?.map((i, n) => (
-                  <div key={n} style={{ fontSize: "0.85rem", color: C.text, marginBottom: 4 }}>
-                    • {i}
-                  </div>
-                ))}
-              </div>
-
-              <div
-                style={{
-                  borderLeft: `3px solid ${C.gold}`,
-                  paddingLeft: 12,
-                  background: C.goldLight,
-                  borderRadius: "0 8px 8px 0",
-                  padding: "10px 14px",
-                }}
-              >
-                <div style={{ fontSize: "0.7rem", fontWeight: 700, color: C.gold, textTransform: "uppercase", marginBottom: 4 }}>
-                  Verdict
-                </div>
-                <div style={{ fontSize: "0.875rem", color: C.text }}>{result.verdict}</div>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: C.muted }}>RISK:</span>
-                <Badge
-                  color={riskColors[result.risk]?.[0] || C.muted}
-                  bg={riskColors[result.risk]?.[1] || C.offwhite}
-                >
-                  {result.risk?.toUpperCase()}
-                </Badge>
-                <span style={{ fontSize: "0.78rem", color: C.muted }}>{result.riskNote}</span>
-              </div>
-
-              <div>
-                <div
-                  style={{
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                    color: C.teal,
-                    textTransform: "uppercase",
-                    letterSpacing: ".08em",
-                    marginBottom: 4,
-                  }}
-                >
-                  Advice
-                </div>
-                <p style={{ fontSize: "0.875rem", color: C.text, lineHeight: 1.7 }}>{result.advice}</p>
-              </div>
-
-              {result.applicableLaw && result.applicableLaw.length > 0 && (
-                <div>
-                  <div
-                    style={{
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      color: C.teal,
-                      textTransform: "uppercase",
-                      letterSpacing: ".08em",
-                      marginBottom: 4,
-                    }}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              
+              {/* Risk Level Badge Row */}
+              <div style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "space-between", 
+                background: C.offwhite, 
+                padding: "12px 16px", 
+                borderRadius: 12,
+                border: "1px solid rgba(15,32,68,0.04)"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: "0.78rem", fontWeight: 800, color: C.navy }}>EXPOSURE LEVEL:</span>
+                  <Badge
+                    color={riskColors[result.risk]?.[0] || C.muted}
+                    bg={riskColors[result.risk]?.[1] || C.offwhite}
+                    style={{ fontWeight: 800 }}
                   >
-                    Applicable Law
+                    {result.risk?.toUpperCase()}
+                  </Badge>
+                </div>
+                <RiskGauge level={result.risk} />
+              </div>
+
+              {/* Accordion Summary */}
+              <div>
+                <AccordionHeader title="1. Summary of Dispute" isOpen={openSections.summary} onClick={() => toggleSection("summary")} />
+                {openSections.summary && (
+                  <div style={{ padding: "12px 14px 4px", fontSize: "0.875rem", color: C.text, lineHeight: 1.7 }}>
+                    {result.summary}
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {result.applicableLaw.map((l) => (
-                      <Badge key={l} color={C.navy} bg="#E8EDF5">
-                        {l}
-                      </Badge>
+                )}
+              </div>
+
+              {/* Accordion Key Issues */}
+              <div>
+                <AccordionHeader title="2. Key Legal Issues Identified" isOpen={openSections.issues} onClick={() => toggleSection("issues")} />
+                {openSections.issues && (
+                  <div style={{ padding: "12px 14px 4px" }}>
+                    {result.keyIssues?.map((i, n) => (
+                      <div key={n} style={{ fontSize: "0.875rem", color: C.text, marginBottom: 8, display: "flex", gap: 8 }}>
+                        <span style={{ color: C.teal, fontWeight: 700 }}>•</span>
+                        <span>{i}</span>
+                      </div>
                     ))}
                   </div>
-                </div>
-              )}
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {result.tags?.map((t) => (
-                  <Badge key={t} color={C.teal} bg={C.tealLight}>
-                    {t}
-                  </Badge>
-                ))}
+                )}
               </div>
+
+              {/* Accordion Verdict */}
+              <div>
+                <AccordionHeader title="3. Tribunal Verdict / Decision" isOpen={openSections.verdict} onClick={() => toggleSection("verdict")} />
+                {openSections.verdict && (
+                  <div style={{ padding: "12px 14px 4px" }}>
+                    <div style={{ borderLeft: `3.5px solid ${C.gold}`, background: C.goldLight, padding: "12px 16px", borderRadius: "0 8px 8px 0" }}>
+                      <div style={{ fontSize: "0.875rem", color: C.text, lineHeight: 1.6, fontWeight: 500 }}>
+                        {result.verdict}
+                      </div>
+                      {result.riskNote && (
+                        <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 8, fontStyle: "italic" }}>
+                          ℹ {result.riskNote}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Accordion Advice */}
+              <div>
+                <AccordionHeader title="4. Professional Advice & Next Steps" isOpen={openSections.advice} onClick={() => toggleSection("advice")} />
+                {openSections.advice && (
+                  <div style={{ padding: "12px 14px 4px", fontSize: "0.875rem", color: C.text, lineHeight: 1.7 }}>
+                    {result.advice}
+                  </div>
+                )}
+              </div>
+
+              {/* Accordion Law & Tags */}
+              <div>
+                <AccordionHeader title="5. Applicable Law & References" isOpen={openSections.law} onClick={() => toggleSection("law")} />
+                {openSections.law && (
+                  <div style={{ padding: "12px 14px 4px", display: "flex", flexDirection: "column", gap: 12 }}>
+                    {result.applicableLaw && result.applicableLaw.length > 0 && (
+                      <div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {result.applicableLaw.map((l) => (
+                            <Badge key={l} color={C.navy} bg="#E8EDF5">
+                              ⚖️ {l}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {result.tags && result.tags.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, borderTop: "1px solid rgba(15,32,68,0.03)", paddingTop: 8 }}>
+                        {result.tags.map((t) => (
+                          <Badge key={t} color={C.teal} bg={C.tealLight}>
+                            #{t}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
         </Card>
       </div>
 
       {reports.length > 0 && (
-        <div style={{ marginTop: 28 }}>
-          <div style={{ fontWeight: 700, color: C.navy, marginBottom: 14 }}>📁 Recent Reports</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ marginTop: 36 }}>
+          <div style={{ fontWeight: 800, color: C.navy, marginBottom: 16, fontSize: "0.98rem" }}>📁 Recent Analyses Reports</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
             {reports.map((r) => (
               <Card
                 key={r.id}
-                style={{ padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                style={{ padding: "18px 20px", display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", gap: 12 }}
                 hover
                 onClick={() => loadPastReport(r)}
               >
                 <div>
-                  <div style={{ fontSize: "0.875rem", fontWeight: 600, color: C.navy }}>{r.title}</div>
-                  <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 2 }}>
-                    {new Date(r.created_at).toLocaleDateString()}
+                  <div style={{ fontSize: "0.875rem", fontWeight: 700, color: C.navy, lineHeight: 1.45 }}>{r.title}</div>
+                  <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 4, fontWeight: 500 }}>
+                    📅 {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </div>
                 </div>
-                <Badge
-                  color={riskColors[r.risk_level]?.[0] || C.muted}
-                  bg={riskColors[r.risk_level]?.[1] || C.offwhite}
-                >
-                  {r.risk_level?.toUpperCase()}
-                </Badge>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", borderTop: "1px solid rgba(15,32,68,0.04)", paddingTop: 10 }}>
+                  <span style={{ fontSize: "0.78rem", color: C.teal, fontWeight: 700 }}>View Report →</span>
+                  <Badge
+                    color={riskColors[r.risk_level]?.[0] || C.muted}
+                    bg={riskColors[r.risk_level]?.[1] || C.offwhite}
+                    style={{ fontWeight: 700 }}
+                  >
+                    {r.risk_level?.toUpperCase()}
+                  </Badge>
+                </div>
               </Card>
             ))}
           </div>
@@ -431,4 +572,4 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
       )}
     </div>
   );
-};
+};;

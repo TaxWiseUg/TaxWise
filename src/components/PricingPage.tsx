@@ -99,33 +99,34 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
 
   return (
     <div>
-      <div style={{ textAlign: "center", marginBottom: 32 }}>
-        <h1 style={{ fontFamily: "Georgia, serif", fontSize: "1.8rem", color: C.navy, marginBottom: 8 }}>
-          Simple, Honest Pricing
+      <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: C.navy, marginBottom: 8, fontWeight: 800 }}>
+          Simple, Transparent Pricing
         </h1>
-        <p style={{ color: C.muted, fontSize: "0.9rem" }}>Priced in Uganda Shillings. No hidden fees. Cancel anytime.</p>
+        <p style={{ color: C.muted, fontSize: "0.92rem", fontWeight: 500 }}>All subscriptions priced in Uganda Shillings. Upgrade or cancel your subscription at any time.</p>
       </div>
 
       {paymentMessage && (
         <div
           style={{
-            maxWidth: 600,
-            margin: "0 auto 24px",
+            maxWidth: 640,
+            margin: "0 auto 28px",
             background: paymentMessage.includes("successful") ? C.greenLight : C.goldLight,
             color: paymentMessage.includes("successful") ? C.green : C.gold,
-            padding: "14px 20px",
-            borderRadius: 10,
+            padding: "16px 24px",
+            borderRadius: 14,
             fontSize: "0.875rem",
-            fontWeight: 600,
+            fontWeight: 700,
             textAlign: "center",
-            border: `1px solid ${paymentMessage.includes("successful") ? C.green : C.gold}`,
+            border: `1.5px solid ${paymentMessage.includes("successful") ? `${C.green}30` : `${C.gold}30`}`,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.02)"
           }}
         >
           {paymentMessage}
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, marginBottom: 32 }}>
         {plans.map((p) => {
           const isCurrentPlan = user.plan?.toLowerCase() === p.key;
           
@@ -133,12 +134,14 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
             <Card
               key={p.name}
               style={{
-                padding: 28,
+                padding: "36px 28px 28px",
                 position: "relative",
-                border: p.popular ? `2px solid ${C.teal}` : `1px solid ${C.border}`,
+                border: p.popular ? `2px solid ${C.teal}` : `1.5px solid ${C.border}`,
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
+                transform: p.popular ? "scale(1.01)" : "none",
+                boxShadow: p.popular ? "0 12px 36px rgba(26,123,107,0.08)" : "none"
               }}
             >
               <div>
@@ -151,74 +154,84 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
                       transform: "translateX(-50%)",
                       background: C.teal,
                       color: C.white,
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      padding: "4px 14px",
-                      borderRadius: 20,
+                      fontSize: "0.68rem",
+                      fontWeight: 800,
+                      padding: "4px 16px",
+                      borderRadius: 50,
                       whiteSpace: "nowrap",
+                      letterSpacing: "0.04em",
+                      boxShadow: "0 2px 6px rgba(26,123,107,0.2)"
                     }}
                   >
-                    Most Popular
+                    RECOMMENDED
                   </div>
                 )}
+                
                 <div
                   style={{
-                    fontSize: "0.78rem",
-                    fontWeight: 700,
+                    fontSize: "0.72rem",
+                    fontWeight: 800,
                     color: C.muted,
                     textTransform: "uppercase",
-                    letterSpacing: ".1em",
-                    marginBottom: 10,
+                    letterSpacing: ".08em",
+                    marginBottom: 12,
                   }}
                 >
                   {p.name}
                 </div>
-                <div style={{ fontFamily: "Georgia, serif", fontSize: "2.2rem", fontWeight: 800, color: C.navy }}>
-                  UGX {p.price}
+                
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 24 }}>
+                  <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "2.2rem", fontWeight: 800, color: C.navy }}>
+                    UGX {p.price}
+                  </span>
+                  <span style={{ fontSize: "0.85rem", color: C.muted, fontWeight: 500 }}>
+                    {p.period}
+                  </span>
                 </div>
-                <div style={{ fontSize: "0.8rem", color: C.muted, marginBottom: 20 }}>{p.period}</div>
-                <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16, marginBottom: 20 }}>
+
+                <div style={{ borderTop: `1px solid rgba(15,32,68,0.05)`, paddingTop: 20, marginBottom: 24 }}>
                   {p.features.map((f) => (
-                    <div key={f} style={{ fontSize: "0.875rem", color: C.text, marginBottom: 10, display: "flex", gap: 8 }}>
-                      <span style={{ color: C.teal, fontWeight: 700 }}>✓</span>
-                      {f}
+                    <div key={f} style={{ fontSize: "0.85rem", color: C.text, marginBottom: 12, display: "flex", gap: 8, alignItems: "flex-start", fontWeight: 500 }}>
+                      <span style={{ color: C.teal, fontWeight: 800, marginTop: 1 }}>✓</span>
+                      <span>{f}</span>
                     </div>
                   ))}
                 </div>
               </div>
+
               <Button
                 onClick={() => !isCurrentPlan && initiatePayment(p.key)}
                 variant={p.popular ? "primary" : "outline"}
                 disabled={isCurrentPlan || loadingPlan !== null}
                 style={{ width: "100%", justifyContent: "center" }}
               >
-                {loadingPlan === p.key ? "⟳ Connecting..." : isCurrentPlan ? "✓ Current Active Plan" : p.cta}
+                {loadingPlan === p.key ? "⟳ Connecting Gateway..." : isCurrentPlan ? "✓ Active Plan" : p.cta}
               </Button>
             </Card>
           );
         })}
       </div>
 
-      <Card style={{ padding: 24, marginTop: 24, background: C.navy }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
+      <Card style={{ padding: 28, background: C.navy, border: "none", boxShadow: "0 10px 24px rgba(15,32,68,0.15)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
           <div>
-            <div style={{ fontWeight: 700, color: C.white, marginBottom: 4 }}>💳 Local Payment Methods Supported</div>
-            <div style={{ fontSize: "0.875rem", color: "rgba(255,255,255,.6)" }}>
-              MTN Mobile Money · Airtel Money · Visa/Mastercard
+            <div style={{ fontWeight: 800, color: C.white, marginBottom: 4, fontSize: "0.95rem" }}>💳 Secure Mobile Money & Card Gateway</div>
+            <div style={{ fontSize: "0.82rem", color: "rgba(255,255,255,.65)", fontWeight: 500 }}>
+              Transactions processed locally via secure channels. Instant activation.
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            {["MTN MoMo", "Airtel Money", "Visa", "Mastercard"].map((m) => (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {["MTN MoMo", "Airtel Money", "Visa Card", "Mastercard"].map((m) => (
               <div
                 key={m}
                 style={{
-                  background: "rgba(255,255,255,.1)",
-                  border: "1px solid rgba(255,255,255,.2)",
+                  background: "rgba(255,255,255,.07)",
+                  border: "1px solid rgba(255,255,255,.12)",
                   borderRadius: 6,
                   padding: "6px 12px",
-                  fontSize: "0.75rem",
-                  color: "rgba(255,255,255,.8)",
-                  fontWeight: 600,
+                  fontSize: "0.74rem",
+                  color: "rgba(255,255,255,.85)",
+                  fontWeight: 700,
                 }}
               >
                 {m}

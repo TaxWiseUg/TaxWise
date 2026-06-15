@@ -143,78 +143,200 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
     }
   };
 
+  // Sparkline Component for premium SaaS visual feedback
+  const Sparkline = ({ type, color }: { type: string; color: string }) => {
+    if (type === "line") {
+      return (
+        <svg width="70" height="28" viewBox="0 0 70 28" style={{ opacity: 0.85, overflow: "visible" }}>
+          <path d="M0 24 Q 17 6, 35 18 T 70 4" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      );
+    }
+    if (type === "bar") {
+      return (
+        <svg width="60" height="28" viewBox="0 0 60 28" style={{ opacity: 0.85 }}>
+          <rect x="0" y="14" width="6" height="14" rx="2" fill={color} />
+          <rect x="10" y="8" width="6" height="20" rx="2" fill={color} />
+          <rect x="20" y="18" width="6" height="10" rx="2" fill={color} />
+          <rect x="30" y="5" width="6" height="23" rx="2" fill={color} />
+          <rect x="40" y="11" width="6" height="17" rx="2" fill={color} />
+          <rect x="50" y="2" width="6" height="26" rx="2" fill={color} />
+        </svg>
+      );
+    }
+    if (type === "wave") {
+      return (
+        <svg width="70" height="28" viewBox="0 0 70 28" style={{ opacity: 0.85 }}>
+          <path d="M0 14 C 12 4, 23 4, 35 14 C 47 24, 58 24, 70 14" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      );
+    }
+    // arc/circular loading
+    return (
+      <svg width="30" height="30" viewBox="0 0 36 36" style={{ transform: "rotate(-90deg)", flexShrink: 0 }}>
+        <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(15,32,68,0.05)" strokeWidth="3.5" />
+        <circle cx="18" cy="18" r="16" fill="none" stroke={color} strokeWidth="3.5" strokeDasharray="100" strokeDashoffset="30" strokeLinecap="round" />
+      </svg>
+    );
+  };
+
+  const getSparklineType = (label: string) => {
+    if (label.toLowerCase().includes("cases")) return "line";
+    if (label.toLowerCase().includes("reports")) return "bar";
+    if (label.toLowerCase().includes("lessons")) return "wave";
+    return "arc";
+  };
+
+  // Quick Action Button Wrapper for premium interactions
+  const QuickActionButton = ({ action, onClick }: { action: any; onClick: () => void }) => {
+    const [hovered, setHovered] = useState(false);
+    return (
+      <button
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          background: hovered ? "rgba(15, 32, 68, 0.03)" : C.offwhite,
+          border: `1.5px solid ${hovered ? C.teal : C.border}`,
+          borderRadius: 12,
+          padding: "14px 18px",
+          textAlign: "left",
+          fontSize: "0.875rem",
+          color: C.navy,
+          fontWeight: 700,
+          cursor: "pointer",
+          transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+          fontFamily: "inherit",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          boxShadow: hovered ? "0 4px 12px rgba(15, 32, 68, 0.03)" : "none",
+          transform: hovered ? "translateY(-1px)" : "none",
+        }}
+      >
+        <span>{action.label}</span>
+        <span style={{ 
+          transform: hovered ? "translateX(4px)" : "none", 
+          transition: "transform 0.2s",
+          color: C.teal,
+          fontSize: "1rem"
+        }}>
+          →
+        </span>
+      </button>
+    );
+  };
+
   return (
     <div>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: "Georgia, serif", fontSize: "1.6rem", color: C.navy, marginBottom: 4 }}>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: C.navy, marginBottom: 6, fontWeight: 800 }}>
           Welcome back, {user.full_name?.split(" ")[0] || "User"} 👋
         </h1>
-        <p style={{ color: C.muted, fontSize: "0.9rem" }}>Here's what's happening with your TaxWise account.</p>
+        <p style={{ color: C.muted, fontSize: "0.92rem", fontWeight: 500 }}>Here's what's happening with your TaxWise account today.</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20, marginBottom: 32 }}>
         {stats.map(s => (
-          <Card key={s.label} style={{ padding: "20px 22px" }}>
-            <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>{s.icon}</div>
-            <div style={{ fontFamily: "Georgia, serif", fontSize: "1.8rem", fontWeight: 800, color: s.color }}>
-              {loading ? "..." : s.value}
+          <Card key={s.label} style={{ padding: "24px", display: "flex", flexDirection: "column" }} hover>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+              <div style={{ 
+                width: 42, 
+                height: 42, 
+                borderRadius: 10, 
+                background: `${s.color}12`, // 10% opacity hex
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center", 
+                fontSize: "1.3rem" 
+              }}>
+                {s.icon}
+              </div>
+              <Sparkline type={getSparklineType(s.label)} color={s.color} />
             </div>
-            <div style={{ fontSize: "0.78rem", color: C.muted, marginTop: 2 }}>{s.label}</div>
+            
+            <div style={{ marginTop: "auto" }}>
+              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "2.1rem", fontWeight: 800, color: s.color, lineHeight: 1 }}>
+                {loading ? "..." : s.value}
+              </div>
+              <div style={{ fontSize: "0.78rem", color: C.muted, marginTop: 8, fontWeight: 600, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+                {s.label}
+              </div>
+            </div>
           </Card>
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
-        <Card style={{ padding: 24 }}>
-          <div style={{ fontWeight: 700, color: C.navy, marginBottom: 16, fontSize: "0.95rem" }}>Quick Actions</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24 }}>
+        <Card style={{ padding: 28 }}>
+          <div style={{ fontWeight: 800, color: C.navy, marginBottom: 20, fontSize: "0.98rem", letterSpacing: "-0.01em" }}>Quick Actions</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
               { label: "📄 Analyze a New Case", page: "analyzer" },
               { label: "📚 Continue Learning", page: "education" },
               { label: "🔍 Search TAT Cases", page: "library" },
               { label: "✅ Run Compliance Check", page: "compliance" },
             ].map(a => (
-              <button
+              <QuickActionButton
                 key={a.label}
+                action={a}
                 onClick={() => onNavigate(a.page)}
-                style={{
-                  background: C.offwhite,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 8,
-                  padding: "11px 14px",
-                  textAlign: "left",
-                  fontSize: "0.875rem",
-                  color: C.navy,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "background .15s",
-                  fontFamily: "inherit",
-                }}
-              >
-                {a.label}
-              </button>
+              />
             ))}
           </div>
         </Card>
 
-        <Card style={{ padding: 24 }}>
-          <div style={{ fontWeight: 700, color: C.navy, marginBottom: 16, fontSize: "0.95rem" }}>Recent Activity</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <Card style={{ padding: 28 }}>
+          <div style={{ fontWeight: 800, color: C.navy, marginBottom: 20, fontSize: "0.98rem", letterSpacing: "-0.01em" }}>Recent Activity</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, position: "relative" }}>
+            
+            {/* Vertical timeline timeline guide line */}
+            {activities.length > 1 && (
+              <div style={{ 
+                position: "absolute", 
+                left: 17, 
+                top: 8, 
+                bottom: 8, 
+                width: 2, 
+                background: `linear-gradient(180deg, ${C.border} 0%, rgba(229, 231, 235, 0.1) 100%)`, 
+                zIndex: 1 
+              }} />
+            )}
+
             {loading ? (
-              <div style={{ fontSize: "0.85rem", color: C.muted }}>Loading recent activities...</div>
+              <div style={{ fontSize: "0.85rem", color: C.muted, padding: "10px 0" }}>Loading activities...</div>
             ) : activities.length > 0 ? (
               activities.map((r, i) => (
-                <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.teal, marginTop: 6, flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontSize: "0.85rem", fontWeight: 600, color: C.navy }}>{r.title}</div>
-                    <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 2 }}>{r.type} · {r.time}</div>
+                <div key={i} style={{ display: "flex", gap: 16, alignItems: "flex-start", padding: "10px 0", position: "relative", zIndex: 5 }}>
+                  <div style={{ 
+                    width: 36, 
+                    height: 36, 
+                    borderRadius: "50%", 
+                    background: C.white,
+                    border: `2.5px solid ${r.type.includes("Case") ? C.teal : C.navy}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.85rem",
+                    flexShrink: 0,
+                    boxShadow: "0 2px 4px rgba(15, 32, 68, 0.05)"
+                  }}>
+                    {r.type.includes("Case") ? "⚖️" : "✅"}
+                  </div>
+                  <div style={{ flex: 1, paddingTop: 2 }}>
+                    <div style={{ fontSize: "0.88rem", fontWeight: 700, color: C.navy, lineHeight: 1.4 }}>{r.title}</div>
+                    <div style={{ fontSize: "0.76rem", color: C.muted, marginTop: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontWeight: 600, color: r.type.includes("Case") ? C.teal : C.navy }}>{r.type}</span>
+                      <span>•</span>
+                      <span>{r.time}</span>
+                    </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div style={{ fontSize: "0.85rem", color: C.muted, textAlign: "center", padding: "20px 0" }}>
-                No recent activity. Start by analyzing a case or taking a course!
+              <div style={{ fontSize: "0.85rem", color: C.muted, textAlign: "center", padding: "32px 0" }}>
+                <div style={{ fontSize: "1.8rem", marginBottom: 8, opacity: 0.5 }}>📂</div>
+                No recent activity found. Get started by exploring the tools!
               </div>
             )}
           </div>

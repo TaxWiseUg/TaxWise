@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { COMPLIANCE_ITEMS, C, riskColors } from "../lib/constants";
-import { Badge, Button, Card } from "./UI";
+import { Badge, Button, Card, ProgressBar } from "./UI";
 
 interface ComplianceCheckerProps {
   user: {
@@ -102,16 +102,19 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
 
   return (
     <div>
-      <h1 style={{ fontFamily: "Georgia, serif", fontSize: "1.6rem", color: C.navy, marginBottom: 6 }}>
-        Compliance Checker
-      </h1>
-      <p style={{ color: C.muted, fontSize: "0.9rem", marginBottom: 24 }}>
-        Work through each checklist and get an AI-generated risk report for your business.
-      </p>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: C.navy, marginBottom: 6, fontWeight: 800 }}>
+          Compliance Checker
+        </h1>
+        <p style={{ color: C.muted, fontSize: "0.92rem", fontWeight: 500 }}>
+          Work through eFRIS, VAT, and PAYE statutory checklists to generate an AI risk audit report.
+        </p>
+      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 28, alignItems: "start" }}>
         <div>
-          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+          {/* Tab Selectors */}
+          <div style={{ display: "flex", gap: 10, marginBottom: 20, background: "rgba(15, 32, 68, 0.03)", padding: 6, borderRadius: 12, width: "fit-content" }}>
             {tabs.map((t) => (
               <button
                 key={t.key}
@@ -120,15 +123,17 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                   setAiReport("");
                 }}
                 style={{
-                  padding: "9px 20px",
+                  padding: "8px 24px",
                   borderRadius: 8,
-                  border: `2px solid ${tab === t.key ? C.teal : C.border}`,
-                  background: tab === t.key ? C.teal : C.white,
+                  border: "none",
+                  background: tab === t.key ? C.teal : "transparent",
                   color: tab === t.key ? C.white : C.muted,
                   fontWeight: 700,
-                  fontSize: "0.875rem",
+                  fontSize: "0.85rem",
                   cursor: "pointer",
+                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                   fontFamily: "inherit",
+                  boxShadow: tab === t.key ? "0 4px 10px rgba(26,123,107,0.2)" : "none"
                 }}
               >
                 {t.label}
@@ -136,36 +141,33 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
             ))}
           </div>
 
-          <Card style={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <div style={{ fontWeight: 700, color: C.navy }}>
-                {tabs.find((t) => t.key === tab)?.label} Compliance Checklist
+          <Card style={{ padding: 28 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ fontWeight: 800, color: C.navy, fontSize: "0.98rem" }}>
+                {tabs.find((t) => t.key === tab)?.label} Auditing Checklist
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div
                   style={{
-                    fontFamily: "Georgia, serif",
-                    fontSize: "1.5rem",
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: "1.6rem",
                     fontWeight: 800,
                     color: score >= 80 ? C.green : score >= 50 ? C.gold : C.red,
                   }}
                 >
                   {score}%
                 </div>
-                <div style={{ fontSize: "0.75rem", color: C.muted }}>complete</div>
+                <div style={{ fontSize: "0.75rem", color: C.muted, fontWeight: 600 }}>COMPLETED</div>
               </div>
             </div>
-            <div style={{ height: 8, background: C.border, borderRadius: 4, marginBottom: 20, overflow: "hidden" }}>
-              <div
-                style={{
-                  height: "100%",
-                  width: `${score}%`,
-                  background: score >= 80 ? C.green : score >= 50 ? C.gold : C.red,
-                  borderRadius: 4,
-                  transition: "width .3s",
-                }}
-              />
-            </div>
+
+            {/* Custom Gradient Progress Bar */}
+            <ProgressBar 
+              progress={score} 
+              color={score >= 80 ? C.green : score >= 50 ? C.gold : C.red} 
+              style={{ marginBottom: 24 }} 
+            />
+
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {items.map((item) => {
                 const isChecked = checked[`${tab}-${item.id}`];
@@ -178,12 +180,14 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                       display: "flex",
                       alignItems: "center",
                       gap: 14,
-                      padding: "13px 16px",
-                      borderRadius: 10,
-                      border: `1px solid ${isChecked ? C.teal : C.border}`,
+                      padding: "14px 18px",
+                      borderRadius: 12,
+                      border: `1.5px solid ${isChecked ? `${C.teal}30` : C.border}`,
                       background: isChecked ? C.tealLight : C.white,
                       cursor: "pointer",
-                      transition: "all .15s",
+                      transition: "all 0.2s ease",
+                      animation: isChecked ? "checkPop 0.25s ease" : "none",
+                      boxShadow: isChecked ? "none" : "0 2px 4px rgba(15,32,68,0.01)"
                     }}
                   >
                     <div
@@ -199,7 +203,8 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                         flexShrink: 0,
                         color: C.white,
                         fontSize: "0.8rem",
-                        fontWeight: 700,
+                        fontWeight: 900,
+                        transition: "all 0.15s ease"
                       }}
                     >
                       {isChecked ? "✓" : ""}
@@ -210,7 +215,9 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                         fontSize: "0.875rem",
                         color: isChecked ? C.teal : C.text,
                         textDecoration: isChecked ? "line-through" : "none",
+                        opacity: isChecked ? 0.75 : 1,
                         lineHeight: 1.5,
+                        fontWeight: isChecked ? 500 : 600
                       }}
                     >
                       {item.text}
@@ -225,63 +232,79 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
           </Card>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Card style={{ padding: 20 }}>
-            <div style={{ fontWeight: 700, color: C.navy, marginBottom: 14 }}>Score Summary</div>
-            {["high", "medium", "low"].map((r) => {
-              const total = items.filter((i) => i.risk === r);
-              const done = total.filter((i) => checked[`${tab}-${i.id}`]);
-              const [rc, rb] = riskColors[r];
-              return (
-                <div
-                  key={r}
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}
-                >
-                  <Badge color={rc} bg={rb}>
-                    {r} risk
-                  </Badge>
-                  <span style={{ fontSize: "0.85rem", color: C.muted }}>
-                    {done.length}/{total.length} done
-                  </span>
-                </div>
-              );
-            })}
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <Card style={{ padding: 24 }}>
+            <div style={{ fontWeight: 800, color: C.navy, marginBottom: 16, fontSize: "0.95rem" }}>Score Breakdown</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {["high", "medium", "low"].map((r) => {
+                const total = items.filter((i) => i.risk === r);
+                const done = total.filter((i) => checked[`${tab}-${i.id}`]);
+                const [rc, rb] = riskColors[r];
+                return (
+                  <div
+                    key={r}
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid rgba(15,32,68,0.03)`, paddingBottom: 8 }}
+                  >
+                    <Badge color={rc} bg={rb}>
+                      {r} risk
+                    </Badge>
+                    <span style={{ fontSize: "0.85rem", color: C.navy, fontWeight: 700 }}>
+                      {done.length} / {total.length} cleared
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Pulsing Outstanding High-Risk Items Banner */}
             {highRisks.length > 0 && (
-              <div style={{ background: C.redLight, borderRadius: 8, padding: 12, marginTop: 12 }}>
-                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: C.red, marginBottom: 6 }}>
-                  ⚠ {highRisks.length} HIGH-RISK ITEMS OUTSTANDING
+              <div 
+                style={{ 
+                  background: C.redLight, 
+                  borderRadius: 10, 
+                  padding: 14, 
+                  marginTop: 16,
+                  border: "1.5px solid transparent",
+                  animation: "pulseBorder 2.5s infinite"
+                }}
+              >
+                <div style={{ fontSize: "0.75rem", fontWeight: 800, color: C.red, marginBottom: 8, letterSpacing: "0.02em" }}>
+                  ⚠ {highRisks.length} HIGH-RISK VULNERABILITIES OUTSTANDING
                 </div>
                 {highRisks.slice(0, 2).map((h) => (
-                  <div key={h.id} style={{ fontSize: "0.75rem", color: C.red, marginBottom: 3 }}>
-                    • {h.text.slice(0, 60)}...
+                  <div key={h.id} style={{ fontSize: "0.76rem", color: C.red, marginBottom: 4, display: "flex", gap: 5 }}>
+                    <span>•</span>
+                    <span style={{ fontWeight: 500 }}>{h.text.slice(0, 70)}...</span>
                   </div>
                 ))}
               </div>
             )}
           </Card>
 
-          <Card style={{ padding: 20 }}>
-            <div style={{ fontWeight: 700, color: C.navy, marginBottom: 10 }}>✦ AI Risk Report</div>
-            <p style={{ fontSize: "0.82rem", color: C.muted, lineHeight: 1.65, marginBottom: 14 }}>
-              Get a professional risk report based on your current checklist — including potential penalties under Uganda
-              tax law.
+          <Card style={{ padding: 24 }}>
+            <div style={{ fontWeight: 800, color: C.navy, marginBottom: 8, fontSize: "0.95rem" }}>✦ AI Compliance Audit</div>
+            <p style={{ fontSize: "0.82rem", color: C.muted, lineHeight: 1.6, marginBottom: 16, fontWeight: 500 }}>
+              Generates a detailed regulatory report outlining specific legal exposure and applicable penalties under the Tax Procedures Code Act.
             </p>
             <Button onClick={generateReport} disabled={aiLoading} style={{ width: "100%", justifyContent: "center" }}>
-              {aiLoading ? "⟳ Generating..." : "Generate Report"}
+              {aiLoading ? "⟳ Auditing Checklists..." : "Generate Risk Report"}
             </Button>
+            
             {aiReport && (
               <div
                 style={{
-                  marginTop: 14,
+                  marginTop: 18,
                   background: C.offwhite,
-                  borderRadius: 8,
-                  padding: 14,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 10,
+                  padding: 16,
                   fontSize: "0.82rem",
                   color: C.text,
-                  lineHeight: 1.75,
-                  maxHeight: 300,
+                  lineHeight: 1.7,
+                  maxHeight: 280,
                   overflowY: "auto",
                   whiteSpace: "pre-wrap",
+                  fontFamily: "inherit"
                 }}
               >
                 {aiReport}
@@ -290,30 +313,40 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
           </Card>
 
           {pastReports.length > 0 && (
-            <Card style={{ padding: 20 }}>
-              <div style={{ fontWeight: 700, color: C.navy, marginBottom: 12 }}>📁 Past Audits</div>
+            <Card style={{ padding: 24 }}>
+              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 14, fontSize: "0.95rem" }}>📁 Historic Audits</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 180, overflowY: "auto" }}>
                 {pastReports.map((report) => (
                   <div
                     key={report.id}
                     onClick={() => loadPastReport(report)}
                     style={{
-                      padding: "8px 10px",
-                      borderRadius: 6,
-                      background: C.offwhite,
+                      padding: "10px 14px",
+                      borderRadius: 8,
+                      background: C.white,
                       cursor: "pointer",
-                      fontSize: "0.78rem",
+                      fontSize: "0.8rem",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      border: `1px solid ${C.border}`,
+                      border: `1.5px solid ${C.border}`,
+                      transition: "all 0.2s"
+                    }}
+                    onMouseOver={e => {
+                      e.currentTarget.style.borderColor = C.teal;
+                      e.currentTarget.style.background = C.offwhite;
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.borderColor = C.border;
+                      e.currentTarget.style.background = C.white;
                     }}
                   >
                     <div>
-                      <strong style={{ color: C.navy }}>{report.type.toUpperCase()}</strong> ({report.score}%)
+                      <strong style={{ color: C.navy, textTransform: "uppercase" }}>{report.type}</strong>
+                      <span style={{ color: C.muted, marginLeft: 6 }}>({report.score}%)</span>
                     </div>
-                    <div style={{ color: C.muted, fontSize: "0.72rem" }}>
-                      {new Date(report.created_at).toLocaleDateString()}
+                    <div style={{ color: C.muted, fontSize: "0.72rem", fontWeight: 600 }}>
+                      {new Date(report.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </div>
                   </div>
                 ))}

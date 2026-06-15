@@ -74,53 +74,61 @@ export const CaseLibrary: React.FC = () => {
 
   return (
     <div>
-      <h1 style={{ fontFamily: "Georgia, serif", fontSize: "1.6rem", color: C.navy, marginBottom: 6 }}>
-        TAT Case Precedent Library
-      </h1>
-      <p style={{ color: C.muted, fontSize: "0.9rem", marginBottom: 20 }}>
-        Search and explore Tax Appeals Tribunal rulings. Click any case for an AI-powered expert analysis.
-      </p>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: C.navy, marginBottom: 6, fontWeight: 800 }}>
+          TAT Case Precedents
+        </h1>
+        <p style={{ color: C.muted, fontSize: "0.92rem", fontWeight: 500 }}>
+          Search and explore historic Tax Appeals Tribunal (TAT) rulings. Click on any ruling to access AI expert commentary.
+        </p>
+      </div>
 
-      <Card style={{ padding: 20, marginBottom: 20 }}>
+      <Card style={{ padding: 24, marginBottom: 24 }}>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="🔍  Search by case name, reference, tags, or keyword..."
+          placeholder="🔍  Search by case title, TAT reference code, keywords, or tax rules..."
+          className="input-focus-ring"
           style={{
             width: "100%",
-            border: `1px solid ${C.border}`,
-            borderRadius: 8,
-            padding: "11px 16px",
+            border: `1.5px solid ${C.border}`,
+            borderRadius: 10,
+            padding: "13px 18px",
             fontSize: "0.9rem",
             fontFamily: "inherit",
             outline: "none",
             background: C.offwhite,
             boxSizing: "border-box",
             color: C.text,
-            marginBottom: 14,
+            marginBottom: 16,
+            transition: "all 0.2s ease"
           }}
         />
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
           {[
-            ["Type", types, typeFilter, setTypeFilter],
+            ["Tax Type", types, typeFilter, setTypeFilter],
             ["Year", years, yearFilter, setYearFilter],
             ["Outcome", outcomes, outcomeFilter, setOutcomeFilter],
           ].map(([label, opts, val, set]) => (
             <div key={label as string} style={{ display: "flex", alignItems: "center" }}>
-              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: C.muted, marginRight: 6 }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 700, color: C.muted, marginRight: 8, textTransform: "uppercase", letterSpacing: "0.02em" }}>
                 {label as string}:
               </span>
               <select
                 value={val as string}
                 onChange={(e) => (set as React.Dispatch<React.SetStateAction<string>>)(e.target.value)}
+                className="input-focus-ring"
                 style={{
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 6,
-                  padding: "6px 10px",
+                  border: `1.5px solid ${C.border}`,
+                  borderRadius: 8,
+                  padding: "7px 12px",
                   fontSize: "0.82rem",
+                  fontWeight: 600,
                   fontFamily: "inherit",
                   background: C.white,
-                  color: C.text,
+                  color: C.navy,
+                  outline: "none",
+                  transition: "all 0.2s"
                 }}
               >
                 {(opts as string[]).map((o) => (
@@ -129,30 +137,30 @@ export const CaseLibrary: React.FC = () => {
               </select>
             </div>
           ))}
-          <div style={{ marginLeft: "auto", fontSize: "0.82rem", color: C.muted }}>
-            {filtered.length} case{filtered.length !== 1 ? "s" : ""} found
+          <div style={{ marginLeft: "auto", fontSize: "0.82rem", color: C.muted, fontWeight: 600 }}>
+            {filtered.length} Case{filtered.length !== 1 ? "s" : ""} Found
           </div>
         </div>
       </Card>
 
       {loading ? (
         <div style={{ textAlign: "center", padding: 60, color: C.muted }}>
-          <div style={{ fontSize: "1.8rem", animation: "spin 1s linear infinite", marginBottom: 10 }}>⟳</div>
-          <div>Loading TAT precedents...</div>
+          <div style={{ fontSize: "2rem", animation: "spin 1s linear infinite", marginBottom: 12, color: C.teal }}>⟳</div>
+          <div style={{ fontSize: "0.9rem", fontWeight: 600 }}>Loading TAT precedents...</div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {filtered.map((c) => (
-            <Card key={c.id} hover style={{ padding: "18px 22px", cursor: "pointer" }} onClick={() => setSelected(c)}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+            <Card key={c.id} hover style={{ padding: "22px 26px", cursor: "pointer" }} onClick={() => setSelected(c)}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, color: C.navy, fontSize: "0.95rem", marginBottom: 3 }}>
+                  <div style={{ fontWeight: 800, color: C.navy, fontSize: "1rem", marginBottom: 4 }}>
                     {c.title}
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: C.muted, marginBottom: 8 }}>
-                    {c.case_number} · {c.year}
+                  <div style={{ fontSize: "0.78rem", color: C.muted, marginBottom: 12, fontWeight: 600, letterSpacing: "0.01em" }}>
+                    📂 {c.case_number} · 📅 {c.year}
                   </div>
-                  <p style={{ fontSize: "0.85rem", color: C.text, lineHeight: 1.65, marginBottom: 10 }}>
+                  <p style={{ fontSize: "0.875rem", color: C.text, lineHeight: 1.65, fontWeight: 500 }}>
                     {c.summary}
                   </p>
                 </div>
@@ -160,60 +168,71 @@ export const CaseLibrary: React.FC = () => {
                   <Badge
                     color={outcomeColors[c.outcome]?.[0] || C.muted}
                     bg={outcomeColors[c.outcome]?.[1] || C.offwhite}
+                    style={{ fontWeight: 800 }}
                   >
                     {c.outcome}
                   </Badge>
-                  <Badge color={C.navy} bg="#E8EDF5">
+                  <Badge color={C.navy} bg="#E8EDF5" style={{ fontWeight: 800 }}>
                     {c.tax_type}
                   </Badge>
                 </div>
               </div>
             </Card>
           ))}
+          
           {filtered.length === 0 && (
             <div style={{ textAlign: "center", padding: 60, color: C.muted }}>
-              No cases match your search. Try different keywords or clear the filters.
+              <div style={{ fontSize: "2rem", marginBottom: 8 }}>🔍</div>
+              <div style={{ fontSize: "0.9rem", fontWeight: 600 }}>No precedents found</div>
+              <p style={{ fontSize: "0.82rem", color: C.muted, marginTop: 4 }}>Try altering search keywords or checking filter properties.</p>
             </div>
           )}
         </div>
       )}
 
-      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.case_number} width={640}>
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.case_number} width={680}>
         {selected && (
-          <div>
-            <h3 style={{ color: C.navy, marginBottom: 4, fontSize: "1rem" }}>{selected.title}</h3>
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-              <Badge
-                color={outcomeColors[selected.outcome]?.[0] || C.muted}
-                bg={outcomeColors[selected.outcome]?.[1] || C.offwhite}
-              >
-                {selected.outcome}
-              </Badge>
-              <Badge color={C.navy} bg="#E8EDF5">
-                {selected.tax_type}
-              </Badge>
-              <Badge color={C.muted} bg={C.offwhite}>
-                {selected.year}
-              </Badge>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <h3 style={{ color: C.navy, marginBottom: 8, fontSize: "1.15rem", fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800 }}>
+                {selected.title}
+              </h3>
+              <div style={{ display: "flex", gap: 8 }}>
+                <Badge
+                  color={outcomeColors[selected.outcome]?.[0] || C.muted}
+                  bg={outcomeColors[selected.outcome]?.[1] || C.offwhite}
+                  style={{ fontWeight: 800 }}
+                >
+                  {selected.outcome}
+                </Badge>
+                <Badge color={C.navy} bg="#E8EDF5" style={{ fontWeight: 800 }}>
+                  {selected.tax_type}
+                </Badge>
+                <Badge color={C.muted} bg={C.offwhite} style={{ fontWeight: 800 }}>
+                  📅 {selected.year}
+                </Badge>
+              </div>
             </div>
-            <div style={{ fontSize: "0.875rem", color: C.text, lineHeight: 1.75, marginBottom: 20 }}>
+            
+            <div style={{ fontSize: "0.9rem", color: C.text, lineHeight: 1.75, borderTop: "1px solid rgba(15,32,68,0.05)", paddingTop: 16, fontWeight: 500 }}>
               {selected.summary}
             </div>
+            
             {selected.ai_commentary && (
-              <div style={{ background: C.tealLight, borderRadius: 10, padding: 16 }}>
+              <div style={{ background: C.tealLight, borderRadius: 14, padding: 20, border: `1px solid ${C.teal}15` }}>
                 <div
                   style={{
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
+                    fontSize: "0.72rem",
+                    fontWeight: 800,
                     color: C.teal,
                     textTransform: "uppercase",
                     letterSpacing: ".08em",
                     marginBottom: 8,
                   }}
                 >
-                  ✦ AI Expert Commentary
+                  ✦ AI Expert Legal Commentary
                 </div>
-                <p style={{ fontSize: "0.875rem", color: C.text, lineHeight: 1.75 }}>{selected.ai_commentary}</p>
+                <p style={{ fontSize: "0.875rem", color: C.text, lineHeight: 1.7, fontWeight: 500 }}>{selected.ai_commentary}</p>
               </div>
             )}
           </div>
@@ -221,4 +240,4 @@ export const CaseLibrary: React.FC = () => {
       </Modal>
     </div>
   );
-};
+};;

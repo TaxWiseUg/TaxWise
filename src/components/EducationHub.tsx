@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { C, levelColors } from "../lib/constants";
-import { Badge, Button, Card } from "./UI";
+import { Badge, Button, Card, ProgressBar } from "./UI";
 
 interface Lesson {
   id: string;
@@ -221,7 +221,7 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
             color: C.teal,
             fontWeight: 700,
             fontSize: "0.875rem",
-            marginBottom: 20,
+            marginBottom: 24,
             padding: 0,
             fontFamily: "inherit",
             display: "inline-flex",
@@ -232,27 +232,31 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
           ← Back to {activeCourse.title}
         </button>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr minmax(280px, 320px)", gap: 24 }}>
-          <Card style={{ padding: 32 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr minmax(300px, 340px)", gap: 28, alignItems: "start" }}>
+          <Card style={{ padding: 36 }}>
             <Badge color={lColor} bg={levelColors[activeCourse.level]?.[1] || C.tealLight}>
               {activeCourse.level}
             </Badge>
-            <h2 style={{ fontFamily: "Georgia, serif", color: C.navy, fontSize: "1.4rem", margin: "12px 0 6px" }}>
+            
+            <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", color: C.navy, fontSize: "1.6rem", margin: "14px 0 8px", fontWeight: 800 }}>
               {activeLesson.title}
             </h2>
-            <div style={{ fontSize: "0.78rem", color: C.muted, marginBottom: 24 }}>
-              ⏱ {activeLesson.duration} · {activeCourse.title}
+            
+            <div style={{ fontSize: "0.8rem", color: C.muted, marginBottom: 28, display: "flex", gap: 12, fontWeight: 600 }}>
+              <span>⏱ {activeLesson.duration}</span>
+              <span>•</span>
+              <span>{activeCourse.title}</span>
             </div>
             
-            <div style={{ fontSize: "0.9rem", color: C.text, lineHeight: 1.85, whiteSpace: "pre-line" }}>
+            <div style={{ fontSize: "0.925rem", color: C.text, lineHeight: 1.85, whiteSpace: "pre-line", fontWeight: 500 }}>
               {activeLesson.content.split("**").map((part, i) =>
-                i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                i % 2 === 1 ? <strong key={i} style={{ color: C.navy, fontWeight: 700 }}>{part}</strong> : part
               )}
             </div>
 
-            <div style={{ marginTop: 28, display: "flex", gap: 12 }}>
+            <div style={{ marginTop: 32, display: "flex", gap: 12, borderTop: "1px solid rgba(15,32,68,0.05)", paddingTop: 24 }}>
               <Button onClick={() => markLessonComplete(activeLesson.id)} disabled={isCompleted}>
-                {isCompleted ? "✓ Completed" : "Mark as Complete ✓"}
+                {isCompleted ? "✓ Course Lesson Cleared" : "Mark as Complete ✓"}
               </Button>
               <Button variant="outline" onClick={() => { setActiveLesson(null); setAiQ(""); setAiAnswer(""); }}>
                 Back to Lessons
@@ -260,106 +264,120 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
             </div>
           </Card>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <Card style={{ padding: 20 }}>
-              <div style={{ fontWeight: 700, color: C.navy, marginBottom: 12, fontSize: "0.9rem" }}>
-                Course Progress
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Progress checklist sidebar */}
+            <Card style={{ padding: 24 }}>
+              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 16, fontSize: "0.95rem" }}>
+                Course Modules
               </div>
-              {activeCourse.lessons.map((l, i) => {
-                const lessonDone = enrollment?.completed_lessons.includes(l.id);
-                const isCurrent = l.id === activeLesson.id;
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {activeCourse.lessons.map((l, i) => {
+                  const lessonDone = enrollment?.completed_lessons.includes(l.id);
+                  const isCurrent = l.id === activeLesson.id;
 
-                return (
-                  <div
-                    key={l.id}
-                    onClick={() => {
-                      setActiveLesson(l);
-                      setAiQ("");
-                      setAiAnswer("");
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "8px 0",
-                      borderBottom: i < activeCourse.lessons.length - 1 ? `1px solid ${C.border}` : "none",
-                      cursor: "pointer",
-                    }}
-                  >
+                  return (
                     <div
+                      key={l.id}
+                      onClick={() => {
+                        setActiveLesson(l);
+                        setAiQ("");
+                        setAiAnswer("");
+                      }}
                       style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: "50%",
-                        background: lessonDone ? C.teal : isCurrent ? C.navy : C.offwhite,
-                        border: `2px solid ${lessonDone ? C.teal : isCurrent ? C.navy : C.border}`,
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "0.7rem",
-                        color: lessonDone || isCurrent ? C.white : C.muted,
-                        flexShrink: 0,
+                        gap: 12,
+                        padding: "10px 0",
+                        borderBottom: i < activeCourse.lessons.length - 1 ? `1px solid rgba(15,32,68,0.03)` : "none",
+                        cursor: "pointer",
+                        transition: "all 0.2s"
                       }}
+                      onMouseOver={e => e.currentTarget.style.transform = "translateX(2px)"}
+                      onMouseOut={e => e.currentTarget.style.transform = "none"}
                     >
-                      {lessonDone ? "✓" : i + 1}
+                      <div
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: "50%",
+                          background: lessonDone ? C.teal : isCurrent ? C.navy : C.offwhite,
+                          border: `2px solid ${lessonDone ? C.teal : isCurrent ? C.navy : C.border}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.72rem",
+                          color: lessonDone || isCurrent ? C.white : C.muted,
+                          fontWeight: 700,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {lessonDone ? "✓" : i + 1}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.82rem",
+                          color: isCurrent ? C.navy : C.text,
+                          fontWeight: isCurrent ? 700 : 500,
+                          flex: 1,
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {l.title}
+                      </div>
                     </div>
-                    <div
-                      style={{
-                        fontSize: "0.8rem",
-                        color: isCurrent ? C.navy : C.text,
-                        fontWeight: isCurrent ? 700 : 400,
-                        flex: 1,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {l.title}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </Card>
 
-            <Card style={{ padding: 20 }}>
-              <div style={{ fontWeight: 700, color: C.navy, marginBottom: 10, fontSize: "0.9rem" }}>
-                ✦ Ask the AI Tutor
+            {/* AI Tutor Chat log */}
+            <Card style={{ padding: 24 }}>
+              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 10, fontSize: "0.95rem" }}>
+                ✦ AI Lesson Tutor
               </div>
+              <p style={{ fontSize: "0.78rem", color: C.muted, lineHeight: 1.5, marginBottom: 14 }}>
+                Ask any contextual question regarding this lesson to clarify Uganda tax guidelines.
+              </p>
+
+              {/* Chat thread display */}
+              {aiAnswer && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14, maxHeight: 220, overflowY: "auto", padding: "4px" }}>
+                  {/* User question bubble */}
+                  <div style={{ alignSelf: "flex-end", background: C.navy, color: C.white, borderRadius: "12px 12px 0 12px", padding: "10px 14px", fontSize: "0.82rem", maxWidth: "85%", fontWeight: 500 }}>
+                    {aiQ}
+                  </div>
+                  {/* AI Response bubble */}
+                  <div style={{ alignSelf: "flex-start", background: C.tealLight, color: C.navy, borderRadius: "12px 12px 12px 0", padding: "10px 14px", fontSize: "0.82rem", maxWidth: "85%", border: `1px solid ${C.teal}18` }}>
+                    <div style={{ fontSize: "0.68rem", fontWeight: 800, color: C.teal, marginBottom: 4 }}>TUTOR RESPONSE</div>
+                    <span style={{ fontWeight: 500, lineHeight: 1.6 }}>{aiAnswer}</span>
+                  </div>
+                </div>
+              )}
+
               <textarea
                 value={aiQ}
                 onChange={(e) => setAiQ(e.target.value)}
-                placeholder="Ask a question about this lesson..."
+                placeholder="Type your query regarding this tax unit..."
+                className="input-focus-ring"
                 style={{
                   width: "100%",
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 8,
-                  padding: 10,
+                  border: `1.5px solid ${C.border}`,
+                  borderRadius: 10,
+                  padding: 12,
                   fontSize: "0.82rem",
                   fontFamily: "inherit",
                   resize: "none",
-                  minHeight: 80,
+                  minHeight: 70,
                   outline: "none",
                   boxSizing: "border-box",
                   background: C.offwhite,
                   color: C.text,
+                  transition: "all 0.2s"
                 }}
               />
-              <Button onClick={askAI} disabled={aiLoading || !aiQ.trim()} small style={{ marginTop: 8, width: "100%", justifyContent: "center" }}>
-                {aiLoading ? "⟳ Thinking..." : "Get Answer →"}
+              <Button onClick={askAI} disabled={aiLoading || !aiQ.trim()} small style={{ marginTop: 10, width: "100%", justifyContent: "center" }}>
+                {aiLoading ? "⟳ Consulting Tutor..." : "Ask AI Tutor →"}
               </Button>
-              {aiAnswer && (
-                <div
-                  style={{
-                    marginTop: 12,
-                    background: C.tealLight,
-                    borderRadius: 8,
-                    padding: 12,
-                    fontSize: "0.82rem",
-                    color: C.text,
-                    lineHeight: 1.7,
-                  }}
-                >
-                  {aiAnswer}
-                </div>
-              )}
             </Card>
           </div>
         </div>
@@ -385,49 +403,49 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
             color: C.teal,
             fontWeight: 700,
             fontSize: "0.875rem",
-            marginBottom: 20,
+            marginBottom: 24,
             padding: 0,
             fontFamily: "inherit",
           }}
         >
-          ← All Courses
+          ← Back to All Courses
         </button>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr minmax(260px, 300px)", gap: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr minmax(280px, 320px)", gap: 28, alignItems: "start" }}>
           <div>
-            <div style={{ background: lBg, borderRadius: 16, padding: 28, marginBottom: 20 }}>
-              <div style={{ fontSize: "2.5rem", marginBottom: 12 }}>{activeCourse.emoji}</div>
-              <Badge color={lColor} bg={C.white}>
+            <div style={{ background: lBg, borderRadius: 20, padding: 36, marginBottom: 24, border: `1px solid ${lColor}15` }}>
+              <div style={{ fontSize: "2.8rem", marginBottom: 14 }}>{activeCourse.emoji}</div>
+              <Badge color={lColor} bg={C.white} style={{ boxShadow: "0 2px 8px rgba(15,32,68,0.02)" }}>
                 {activeCourse.level}
               </Badge>
-              <h1 style={{ fontFamily: "Georgia, serif", color: C.navy, fontSize: "1.5rem", margin: "10px 0 8px" }}>
+              <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", color: C.navy, fontSize: "1.7rem", margin: "14px 0 8px", fontWeight: 800 }}>
                 {activeCourse.title}
               </h1>
-              <p style={{ color: C.muted, fontSize: "0.9rem", lineHeight: 1.7 }}>{activeCourse.description}</p>
+              <p style={{ color: C.muted, fontSize: "0.92rem", lineHeight: 1.7, fontWeight: 500 }}>{activeCourse.description}</p>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {activeCourse.lessons.map((l, i) => {
                 const lessonDone = enrollment?.completed_lessons.includes(l.id);
                 return (
                   <Card
                     key={l.id}
                     hover
-                    style={{ padding: "16px 20px", cursor: "pointer" }}
+                    style={{ padding: "18px 24px", cursor: "pointer" }}
                     onClick={() => setActiveLesson(l)}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                       <div
                         style={{
-                          width: 36,
-                          height: 36,
+                          width: 38,
+                          height: 38,
                           borderRadius: "50%",
                           background: lessonDone ? C.teal : C.offwhite,
                           border: `2px solid ${lessonDone ? C.teal : C.border}`,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontSize: "0.85rem",
+                          fontSize: "0.875rem",
                           color: lessonDone ? C.white : C.muted,
                           fontWeight: 700,
                           flexShrink: 0,
@@ -436,10 +454,10 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
                         {lessonDone ? "✓" : i + 1}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, color: C.navy, fontSize: "0.9rem" }}>{l.title}</div>
-                        <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 2 }}>⏱ {l.duration}</div>
+                        <div style={{ fontWeight: 700, color: C.navy, fontSize: "0.92rem" }}>{l.title}</div>
+                        <div style={{ fontSize: "0.76rem", color: C.muted, marginTop: 3, fontWeight: 600 }}>⏱ {l.duration}</div>
                       </div>
-                      <span style={{ color: C.teal, fontSize: "1rem" }}>→</span>
+                      <span style={{ color: C.teal, fontSize: "1.1rem", fontWeight: 700 }}>→</span>
                     </div>
                   </Card>
                 );
@@ -448,21 +466,12 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
           </div>
 
           <div>
-            <Card style={{ padding: 20 }}>
-              <div style={{ fontWeight: 700, color: C.navy, marginBottom: 12 }}>Your Progress</div>
-              <div style={{ height: 8, background: C.border, borderRadius: 4, marginBottom: 8, overflow: "hidden" }}>
-                <div
-                  style={{
-                    height: "100%",
-                    width: `${progressPercent}%`,
-                    background: `linear-gradient(90deg, ${C.teal}, ${C.gold})`,
-                    borderRadius: 4,
-                    transition: "width .3s",
-                  }}
-                />
-              </div>
-              <div style={{ fontSize: "0.8rem", color: C.muted }}>
-                {completedCount} of {activeCourse.lessons.length} lessons done ({progressPercent}%)
+            <Card style={{ padding: 24 }}>
+              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 12, fontSize: "0.95rem" }}>Your Progress</div>
+              {/* Custom Gradient Progress Bar */}
+              <ProgressBar progress={progressPercent} color={`linear-gradient(90deg, ${C.teal} 0%, ${C.gold} 100%)`} style={{ marginBottom: 12 }} />
+              <div style={{ fontSize: "0.82rem", color: C.muted, fontWeight: 500 }}>
+                {completedCount} of {activeCourse.lessons.length} modules cleared ({progressPercent}%)
               </div>
             </Card>
           </div>
@@ -473,69 +482,68 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
 
   return (
     <div>
-      <h1 style={{ fontFamily: "Georgia, serif", fontSize: "1.6rem", color: C.navy, marginBottom: 6 }}>
-        Learning Hub
-      </h1>
-      <p style={{ color: C.muted, fontSize: "0.9rem", marginBottom: 24 }}>
-        Structured Uganda tax education — from fundamentals to TAT appeals mastery.
-      </p>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: C.navy, marginBottom: 6, fontWeight: 800 }}>
+          Learning Hub
+        </h1>
+        <p style={{ color: C.muted, fontSize: "0.92rem", fontWeight: 500 }}>
+          Structured, CPD-eligible Uganda tax courses — from foundations to TAT dispute litigation.
+        </p>
+      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
         {courses.map((c) => {
           const enrollment = enrollments[c.id];
-          const done = enrollment?.completed_lessons.length || 0;
           const progressPercent = enrollment?.progress || 0;
           const [lColor, lBg] = levelColors[c.level] || [C.teal, C.tealLight];
 
           return (
-            <Card key={c.id} hover style={{ cursor: "pointer", overflow: "hidden" }} onClick={() => startOrLoadCourse(c)}>
+            <Card key={c.id} hover style={{ cursor: "pointer", display: "flex", flexDirection: "column", height: "100%" }} onClick={() => startOrLoadCourse(c)}>
               <div
                 style={{
-                  height: 110,
+                  height: 120,
                   background: lBg,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "2.8rem",
+                  fontSize: "3rem",
+                  borderBottom: "1px solid rgba(15,32,68,0.03)"
                 }}
               >
                 {c.emoji}
               </div>
-              <div style={{ padding: 20 }}>
-                <Badge color={lColor} bg={lBg}>
-                  {c.level}
-                </Badge>
-                <h3 style={{ fontFamily: "Georgia, serif", color: C.navy, margin: "10px 0 6px", fontSize: "1rem" }}>
-                  {c.title}
-                </h3>
-                <p style={{ fontSize: "0.82rem", color: C.muted, lineHeight: 1.65, marginBottom: 14 }}>
-                  {c.description}
-                </p>
-                <div style={{ height: 6, background: C.border, borderRadius: 3, marginBottom: 8, overflow: "hidden" }}>
-                  <div
-                    style={{
-                      height: "100%",
-                      width: `${progressPercent}%`,
-                      background: C.teal,
-                      borderRadius: 3,
-                    }}
-                  />
+              <div style={{ padding: 24, flex: 1, display: "flex", flexDirection: "column" }}>
+                <div>
+                  <Badge color={lColor} bg={lBg}>
+                    {c.level}
+                  </Badge>
+                  <h3 style={{ fontFamily: "'Playfair Display', Georgia, serif", color: C.navy, margin: "14px 0 8px", fontSize: "1.05rem", fontWeight: 800 }}>
+                    {c.title}
+                  </h3>
+                  <p style={{ fontSize: "0.82rem", color: C.muted, lineHeight: 1.6, marginBottom: 20, fontWeight: 500 }}>
+                    {c.description}
+                  </p>
+                </div>
+                
+                <div style={{ marginTop: "auto", paddingTop: 8 }}>
+                  <ProgressBar progress={progressPercent} color={C.teal} style={{ height: 6 }} />
                 </div>
               </div>
               <div
                 style={{
-                  borderTop: `1px solid ${C.border}`,
-                  padding: "12px 20px",
+                  borderTop: `1px solid rgba(15,32,68,0.05)`,
+                  padding: "16px 24px",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
+                  background: "rgba(15,32,68,0.01)"
                 }}
               >
-                <span style={{ fontSize: "0.75rem", color: C.muted }}>
-                  {c.lessons.length} lessons · {c.title.includes("Appeals") ? "4 hrs" : c.title.includes("eFRIS") ? "2.5 hrs" : "3 hrs"}
+                <span style={{ fontSize: "0.78rem", color: C.muted, fontWeight: 600 }}>
+                  {c.lessons.length} Modules · {c.title.includes("Appeals") ? "4 hrs" : c.title.includes("eFRIS") ? "2.5 hrs" : "3 hrs"}
                 </span>
                 <span style={{ fontSize: "0.82rem", fontWeight: 700, color: C.teal }}>
-                  {progressPercent > 0 ? `Continue (${progressPercent}%) →` : "Start →"}
+                  {progressPercent > 0 ? `Resume (${progressPercent}%) →` : "Begin →"}
                 </span>
               </div>
             </Card>

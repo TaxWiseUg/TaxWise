@@ -12,7 +12,11 @@ interface AdminUser {
   created_at: string;
 }
 
-export const AdminPortal: React.FC = () => {
+interface AdminPortalProps {
+  onNavigate?: (page: string) => void;
+}
+
+export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate }) => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [stats, setStats] = useState([
     { label: "Total Users", value: "0", icon: "👥" },
@@ -97,47 +101,102 @@ export const AdminPortal: React.FC = () => {
 
   return (
     <div>
-      <h1 style={{ fontFamily: "Georgia, serif", fontSize: "1.6rem", color: C.navy, marginBottom: 6 }}>
-        Admin Portal
-      </h1>
-      <p style={{ color: C.muted, fontSize: "0.9rem", marginBottom: 24 }}>
-        Platform overview and user management.
-      </p>
+      <div style={{ marginBottom: 32 }}>
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate("dashboard")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: "transparent",
+              border: `1.5px solid rgba(15,32,68,0.1)`,
+              borderRadius: 10,
+              color: C.muted,
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              fontFamily: "inherit",
+              padding: "7px 14px",
+              cursor: "pointer",
+              marginBottom: 20,
+              transition: "all 0.2s ease",
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.background = C.offwhite;
+              e.currentTarget.style.color = C.navy;
+              e.currentTarget.style.borderColor = `rgba(15,32,68,0.2)`;
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = C.muted;
+              e.currentTarget.style.borderColor = `rgba(15,32,68,0.1)`;
+            }}
+          >
+            ← Back to Dashboard
+          </button>
+        )}
+        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: C.navy, marginBottom: 6, fontWeight: 800 }}>
+          Admin Portal
+        </h1>
+        <p style={{ color: C.muted, fontSize: "0.92rem", fontWeight: 500 }}>
+          Platform metrics overview, usage monitoring, and user directory administration.
+        </p>
+      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20, marginBottom: 32 }}>
         {stats.map((s) => (
-          <Card key={s.label} style={{ padding: "18px 20px" }}>
-            <div style={{ fontSize: "1.3rem", marginBottom: 6 }}>{s.icon}</div>
-            <div style={{ fontFamily: "Georgia, serif", fontSize: "1.6rem", fontWeight: 800, color: C.navy }}>
-              {loading ? "..." : s.value}
+          <Card key={s.label} style={{ padding: "22px 24px", display: "flex", alignItems: "center", gap: 18 }} hover>
+            <div style={{ 
+              width: 44, 
+              height: 44, 
+              borderRadius: 12, 
+              background: "rgba(15,32,68,0.04)", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              fontSize: "1.40rem",
+              flexShrink: 0
+            }}>
+              {s.icon}
             </div>
-            <div style={{ fontSize: "0.78rem", color: C.muted }}>{s.label}</div>
+            <div>
+              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.8rem", fontWeight: 800, color: C.navy, lineHeight: 1.2 }}>
+                {loading ? "..." : s.value}
+              </div>
+              <div style={{ fontSize: "0.78rem", color: C.muted, marginTop: 4, fontWeight: 600, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+                {s.label}
+              </div>
+            </div>
           </Card>
         ))}
       </div>
 
-      <Card style={{ padding: 0, overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: `1px solid ${C.border}`, fontWeight: 700, color: C.navy }}>
+      <Card style={{ padding: 0, overflow: "hidden", boxShadow: "0 8px 32px rgba(15,32,68,0.03)" }}>
+        <div style={{ padding: "20px 24px", borderBottom: `1px solid rgba(15,32,68,0.05)`, fontWeight: 800, color: C.navy, fontSize: "0.95rem" }}>
           Registered Platform Users
         </div>
         {loading ? (
-          <div style={{ textAlign: "center", padding: 40, color: C.muted }}>Loading user directory...</div>
+          <div style={{ textAlign: "center", padding: 60, color: C.muted }}>
+            <div style={{ fontSize: "2rem", animation: "spin 1s linear infinite", color: C.teal, marginBottom: 12 }}>⟳</div>
+            <div style={{ fontWeight: 600 }}>Loading user directory...</div>
+          </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
               <thead>
                 <tr style={{ background: C.offwhite }}>
-                  {["Name", "Email", "Role", "Plan", "Joined"].map((h) => (
+                  {["Name", "Email Address", "Professional Role", "Subscription Plan", "Joined Date"].map((h) => (
                     <th
                       key={h}
                       style={{
-                        padding: "10px 16px",
+                        padding: "12px 24px",
                         fontSize: "0.75rem",
-                        fontWeight: 700,
+                        fontWeight: 800,
                         color: C.muted,
                         textAlign: "left",
                         textTransform: "uppercase",
                         letterSpacing: ".06em",
+                        borderBottom: `1.5px solid rgba(15,32,68,0.04)`
                       }}
                     >
                       {h}
@@ -147,22 +206,32 @@ export const AdminPortal: React.FC = () => {
               </thead>
               <tbody>
                 {users.map((u, i) => (
-                  <tr key={u.email} style={{ borderTop: `1px solid ${C.border}`, background: i % 2 ? C.white : C.offwhite }}>
-                    <td style={{ padding: "12px 16px", fontSize: "0.875rem", fontWeight: 600, color: C.navy }}>
+                  <tr 
+                    key={u.email} 
+                    style={{ 
+                      borderBottom: `1px solid rgba(15,32,68,0.03)`, 
+                      background: i % 2 ? C.white : "rgba(15,32,68,0.01)",
+                      transition: "background 0.2s"
+                    }}
+                    onMouseOver={e => e.currentTarget.style.background = "rgba(15,32,68,0.02)"}
+                    onMouseOut={e => e.currentTarget.style.background = i % 2 ? C.white : "rgba(15,32,68,0.01)"}
+                  >
+                    <td style={{ padding: "14px 24px", fontSize: "0.875rem", fontWeight: 700, color: C.navy }}>
                       {u.full_name || "Anonymous User"}
                     </td>
-                    <td style={{ padding: "12px 16px", fontSize: "0.82rem", color: C.muted }}>{u.email}</td>
-                    <td style={{ padding: "12px 16px", fontSize: "0.82rem", color: C.text }}>{u.role}</td>
-                    <td style={{ padding: "12px 16px" }}>
+                    <td style={{ padding: "14px 24px", fontSize: "0.82rem", color: C.muted, fontWeight: 500 }}>{u.email}</td>
+                    <td style={{ padding: "14px 24px", fontSize: "0.82rem", color: C.text, fontWeight: 600 }}>{u.role}</td>
+                    <td style={{ padding: "14px 24px" }}>
                       <Badge
                         color={planColors[u.plan?.toLowerCase()]?.[0] || C.muted}
                         bg={planColors[u.plan?.toLowerCase()]?.[1] || C.offwhite}
+                        style={{ fontWeight: 800 }}
                       >
                         {u.plan?.toUpperCase() || "FREE"}
                       </Badge>
                     </td>
-                    <td style={{ padding: "12px 16px", fontSize: "0.82rem", color: C.muted }}>
-                      {new Date(u.created_at).toLocaleDateString()}
+                    <td style={{ padding: "14px 24px", fontSize: "0.82rem", color: C.muted, fontWeight: 500 }}>
+                      {new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </td>
                   </tr>
                 ))}
