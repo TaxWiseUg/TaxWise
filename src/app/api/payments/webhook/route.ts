@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendEmail, getSubscriptionEmailHtml } from "@/lib/resend";
 
 // Helper to get Supabase Admin client dynamically at request time
 function getSupabaseAdmin() {
@@ -84,6 +85,34 @@ export async function POST(req: NextRequest) {
     if (subInsertError) {
       console.error("DB error writing subscription record in webhook:", subInsertError);
       // We don't fail the response completely if history logging failed but the user was upgraded
+    }
+
+    // 4. Send Confirmation Email to the user
+    try {
+      const { data: userProfile, error: fetchError } = await supabaseAdmin
+        .from("users")
+        .select("email, full_name")
+        .eq("id", userId)
+        .single();
+
+      if (fetchError || !userProfile || !userProfile.email) {
+        console.error(`Could not retrieve user profile for email confirmation:`, fetchError || "Missing email");
+      } else {
+        const emailHtml = getSubscriptionEmailHtml(
+          userProfile.full_name || "Valued Customer",
+          planName,
+          String(amount),
+          expiresAt.toISOString()
+        );
+
+        await sendEmail({
+          to: userProfile.email,
+          subject: `Your TaxWise ${planName.charAt(0).toUpperCase() + planName.slice(1)} Subscription is Active!`,
+          html: emailHtml,
+        });
+      }
+    } catch (emailErr) {
+      console.error("Failed to send subscription confirmation email:", emailErr);
     }
 
     console.log(`Successfully processed Flutterwave payment for User ${userId}. Plan upgraded to ${planName}.`);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendEmail, getAccountDeletionEmailHtml } from "@/lib/resend";
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,11 +29,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired session." }, { status: 401 });
     }
 
-    // 3. Use service role client to delete the user from Supabase Auth
-    // (This also cascades to public.users via DB trigger/foreign key constraint)
+    // 3. Retrieve user profile details (such as full name) before deletion
+    let fullName = "Valued Customer";
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+
+    try {
+      const { data: profile } = await adminClient
+        .from("users")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+      if (profile?.full_name) {
+        fullName = profile.full_name;
+      }
+    } catch (profileErr) {
+      console.error("Could not fetch user name before deletion:", profileErr);
+    }
 
     // Delete from public.users table first (in case cascade isn't configured)
     await adminClient.from("users").delete().eq("id", user.id);
@@ -42,6 +56,20 @@ export async function POST(req: NextRequest) {
     if (deleteError) {
       console.error("Failed to delete user from Supabase Auth:", deleteError);
       return NextResponse.json({ error: deleteError.message || "Failed to delete account." }, { status: 500 });
+    }
+
+    // 4. Send account deletion confirmation email
+    if (user.email) {
+      try {
+        const emailHtml = getAccountDeletionEmailHtml(fullName);
+        await sendEmail({
+          to: user.email,
+          subject: "Your TaxWise Account Has Been Deleted",
+          html: emailHtml,
+        });
+      } catch (emailErr) {
+        console.error("Failed to send account deletion email:", emailErr);
+      }
     }
 
     return NextResponse.json({ success: true });
