@@ -57,10 +57,11 @@ ${html}
 
     console.log("[Email Service] Email sent successfully via Resend. ID:", data?.id);
     return { success: true, id: data?.id };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Email Service] Failed to send email via Resend:", error);
     // Return success: false but do not crash the caller (graceful failure)
-    return { success: false, error: error?.message || error };
+    const errMsg = error instanceof Error ? error.message : String(error);
+    return { success: false, error: errMsg };
   }
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────────────────────
 const C = {
@@ -182,7 +182,7 @@ const AuthPage = ({ onLogin }) => {
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ fontFamily: "Georgia, serif", fontSize: "2rem", color: C.white, fontWeight: 800 }}>Tax<span style={{ color: C.teal }}>Wise</span></div>
-          <div style={{ color: "rgba(255,255,255,.6)", fontSize: "0.85rem", marginTop: 6 }}>Uganda's AI Tax Platform</div>
+          <div style={{ color: "rgba(255,255,255,.6)", fontSize: "0.85rem", marginTop: 6 }}>Uganda&apos;s AI Tax Platform</div>
         </div>
         <Card style={{ padding: 32 }}>
           <div style={{ display: "flex", marginBottom: 24, background: C.offwhite, borderRadius: 8, padding: 4 }}>
@@ -233,7 +233,7 @@ const Dashboard = ({ user, onNavigate }) => {
     <div>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontFamily: "Georgia, serif", fontSize: "1.6rem", color: C.navy, marginBottom: 4 }}>Welcome back, {user.name.split(" ")[0]} 👋</h1>
-        <p style={{ color: C.muted, fontSize: "0.9rem" }}>Here's what's happening with your TaxWise account.</p>
+        <p style={{ color: C.muted, fontSize: "0.9rem" }}>Here&apos;s what&apos;s happening with your TaxWise account.</p>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
         {stats.map(s => (

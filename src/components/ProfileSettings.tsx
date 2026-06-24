@@ -86,8 +86,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onRefres
 
       setProfileSuccess("Profile updated successfully!");
       onRefreshUser();
-    } catch (err: any) {
-      setProfileError(err?.message || "Failed to update profile.");
+    } catch (err: unknown) {
+      setProfileError(err instanceof Error ? err.message : "Failed to update profile.");
     } finally {
       setProfileLoading(false);
     }
@@ -133,8 +133,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onRefres
       setPassSuccess("Password updated successfully!");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (err: any) {
-      setPassError(err?.message || "Failed to change password.");
+    } catch (err: unknown) {
+      setPassError(err instanceof Error ? err.message : "Failed to change password.");
     } finally {
       setPassLoading(false);
     }
@@ -204,8 +204,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onRefres
         onAccountDeleted();
       }, 2000);
 
-    } catch (err: any) {
-      setDeleteError(err?.message || "An unexpected error occurred.");
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : "An unexpected error occurred.");
       setDeleteStep("confirm");
       setDeleteLoading(false);
     }
