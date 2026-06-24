@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Required for Docker/Railway deployment — produces a minimal standalone server
+  output: "standalone",
   async redirects() {
     return [
       {
