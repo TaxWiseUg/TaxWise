@@ -80,7 +80,7 @@ To route all Supabase authentication emails (verification codes, invites, and pa
    - **SMTP Host**: `smtp.resend.com`
    - **SMTP Port**: `587` (or `465`)
    - **SMTP Username**: `resend` (literal string `resend`)
-   - **SMTP Password**: Your Resend API key (`re_6sS6aDjE_8odxHQefuJsrw3hsHQtfhJUH`)
+   - **SMTP Password**: Your Resend API key (`re_Kn365pij_64Pi5nFhLxGagwfW9tJiNveq`)
    - **Secure Connection**: `STARTTLS` (if using port `587`) or `SSL/TLS` (if using port `465`)
 6. Click **Save** at the bottom of the section.
 
