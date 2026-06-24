@@ -62,4 +62,27 @@ FLUTTERWAVE_SECRET_KEY=your-flutterwave-secret-key
 FLUTTERWAVE_WEBHOOK_HASH=your-flutterwave-webhook-hash
 ```
 
-Now you are fully ready to connect the Next.js app to your database!
+---
+
+## Step 5: Configure Supabase Auth to use Resend (Custom SMTP)
+
+By default, Supabase sends registration and verification emails using its built-in mail server. This has a strict rate limit of 3 emails per hour and often lands in Spam/Junk folders. 
+
+To route all Supabase authentication emails (verification codes, invites, and password resets) through Resend:
+
+1. Go to your [Supabase Dashboard](https://supabase.com).
+2. Select your project, and navigate to **Settings** (gear icon) -> **Auth** (under project settings).
+3. Scroll down to the **SMTP Configuration** section.
+4. Toggle **Enable Custom SMTP** to **ON**.
+5. Fill in the following details:
+   - **Sender Email**: `onboarding@resend.dev` (for sandbox testing) OR `your-verified-email@taxwise.cloud` (once domain is verified in Resend)
+   - **Sender Name**: `TaxWise`
+   - **SMTP Host**: `smtp.resend.com`
+   - **SMTP Port**: `587` (or `465`)
+   - **SMTP Username**: `resend` (literal string `resend`)
+   - **SMTP Password**: Your Resend API key (`re_6sS6aDjE_8odxHQefuJsrw3hsHQtfhJUH`)
+   - **Secure Connection**: `STARTTLS` (if using port `587`) or `SSL/TLS` (if using port `465`)
+6. Click **Save** at the bottom of the section.
+
+Now, all authentication verification codes and links will be dispatched directly through your Resend service.
+
